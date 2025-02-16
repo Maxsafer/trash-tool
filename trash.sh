@@ -253,7 +253,7 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
 import json, sys, time
 from datetime import datetime
 
-with open('trash.json', 'r') as f:
+with open('$toolDir/trash.json', 'r') as f:
     data = json.load(f)
 
 cur_date = '$curDate'  # Read curDate from Bash
