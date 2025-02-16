@@ -2,7 +2,7 @@
 
 toolDir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 
-curl https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/master/trash.sh -o trash.sh
+curl https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/main/trash.sh -o trash.sh
 chmod u+x trash.sh
 chmod 775 trash.sh
 
