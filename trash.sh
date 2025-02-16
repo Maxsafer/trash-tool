@@ -311,7 +311,7 @@ if [ $# == 0 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     echo "Usage: trash [OPTION] SOURCE"
     echo "Usage: ts [OPTION] SOURCE"
     echo " "
-    echo "Tool documentation:"
+    echo "Tool documentation: https://github.com/Maxsafer/trash-tool"
     echo " "
     echo "Argument list:"
     echo "-h, --help            Display this help menu."
