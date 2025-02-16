@@ -16,10 +16,10 @@ Running this installer more than once will not mess with your previously trashed
 
 The tool performs the following main functions:
 
-Initializes a trash directory and associated metadata files if they do not exist.
-Provides commands to list, recover, and permanently delete files from the trash.
-Supports scheduling automatic trash emptying using cron jobs.
-Offers a help menu to guide users on how to use the tool.
+* Initializes a trash directory and associated metadata files if they do not exist.
+* Provides commands to list, recover, and permanently delete files from the trash.
+* Supports scheduling automatic trash emptying using cron jobs.
+* Offers a help menu to guide users on how to use the tool.
 
 ## Initialization:
 
