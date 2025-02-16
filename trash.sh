@@ -238,7 +238,7 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
     if [ "$2" == "--confirm" ]; then
         if [ "$(ls -A $toolDir/trash_can/)" ]; then
             cd "$toolDir/trash_can/"
-            rm * -R || exit 3
+            rm * -Rf || exit 3
             rm "$toolDir/trash.json"
             echo "emptied trash can"
         else
@@ -283,7 +283,7 @@ for key, value in data.items():
                 echo "No such file or directory" && exit 3
             fi
             cd "$toolDir/trash_can/"
-            rm -R "$key" || exit 3
+            rm -Rf "$key" || exit 3
             echo "Emptied:      $key ($item_path) is older than $days_old days."
         done <<< "$python_output"
 
@@ -296,7 +296,7 @@ for key, value in data.items():
                     echo "$var : No such file or directory" && exit 3
                 fi
                 cd "$toolDir/trash_can/"
-                rm -R "$var" || exit 3
+                rm -Rf "$var" || exit 3
                 echo "emptied:      $var"
             fi
         done
