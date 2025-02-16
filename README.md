@@ -10,6 +10,8 @@ Navigate to the desired installation path and run:
 ```
 This will create a new folder called `trash_tool` and it will add the following aliases `ts` and `trash`, if these are not recognized manually source the displayed file.
 
+Running this installer more than once will not mess with your previously trashed files, but moving the installation folder or renaming it will cause the aliases to break.
+
 ## Overview:
 
 The tool performs the following main functions:
