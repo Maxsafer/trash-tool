@@ -129,10 +129,10 @@ To display help: `trash -h`
 
 ## Error Handling:
 
-The script checks for the existence of files and directories before attempting operations.
-It provides feedback if a file does not exist or if an unknown argument is provided.
+* This tool checks for the existence of files and directories before attempting operations.
+* It provides feedback if a file does not exist or if an unknown argument is provided.
 
 ## Dependencies:
 
-* The tool requires Python 2.6.6 or newer to be installed for JSON operations.
+* Requires Python 2.6.6 or newer to be installed for JSON operations.
 * It uses standard Unix utilities like ls, mv, rm, and crontab.
