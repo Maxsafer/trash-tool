@@ -4,6 +4,7 @@ This tool is a Bash utility designed to manage files and directories by moving t
 I came up with this idea when I was working on a highly restrictive Linux environment, that is why only Python 2.6.6 or higher is needed as a dependency. It also works at the permission level you configure it to run at.
 
 ## Installation:
+Navigate to the desired installation path and run:
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/main/installer.sh)"
 ```
