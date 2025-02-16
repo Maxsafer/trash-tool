@@ -10,6 +10,11 @@ curl https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/main/trash
 chmod u+x trash.sh
 chmod 775 trash.sh
 
+# Check if trash.py exists and delete it if it does
+if [ -f "trash.py" ]; then
+    rm "trash.py"
+fi
+
 # Detect the operating system
 OS="$(uname)"
 
