@@ -14,7 +14,7 @@ fi
 if [ ! -f "$toolDir/trash.json" ]; then
     touch "$toolDir/trash.json"
     chmod 775 "$toolDir/trash.json"
-    echo '{"fileName":"filePath"}' >> "$toolDir/trash.json"
+    echo '{"fileName":["filePath","trashDate"]}' >> "$toolDir/trash.json"
 fi
 
 # logica de python presente
@@ -35,7 +35,7 @@ def getRecover(key):
         data = json.load(f)
 
         # path con el og file name
-        path = str(data.get(key))
+        path = str(data.get(key)[1])
 
         # remove the key from json file
         data.pop(key)
@@ -88,7 +88,7 @@ def getDisplay():
         data = json.load(f)
         
         # Print header with bold and blue
-        print(f'{BOLD}{BLUE}fileName : filePath{RESET}')
+        print(f'{BOLD}{BLUE}fileName : trashDate , filePath{RESET}')
         print('-' * 40)  # Separator line
         
         # Skip header and print remaining items in color
@@ -124,6 +124,66 @@ elif command -v python3 &> /dev/null; then
 else
     echo "Python is not installed. Please install Python to continue."
     exit 1
+fi
+
+# funcion para crear la expresion cron
+generate_cron_expression() {
+  local N=$1
+  local cron_expr=""
+
+  if (( N <= 28 )); then
+    for (( i = N; i <= 28; i+=N )); do
+      cron_expr+="$i,"
+    done
+    cron_expr=${cron_expr%,}  # Remove trailing comma
+    echo "0 0 $cron_expr * *"
+  
+  else
+    local mid_day=$(( N % 30 ))
+    local month_interval=$((N / 30))
+    if [ "$mid_day" == "0" ]; then
+        mid_day="1"
+    elif [ "$mid_day" == "29" ]; then
+       mid_day="28" 
+    fi
+    echo "0 0 $mid_day */$month_interval *"
+  fi
+}
+
+# logica de cron
+if [ "$1" == "-c" ] || [ "$1" == "--cron" ]; then
+    if [ $# == 2 ] && ([ "$2" == "-p" ] || [ "$2" == "--print" ]); then
+        echo "$(crontab -l 2>/dev/null | grep 'trash')"
+    elif ([ $# == 3 ] || [ $# == 5 ])  && ([ "$2" == "-t" ] || [ "$2" == "--time" ]); then
+        # agregar logica para cundo si trae un older than para solo borra files viejos
+        days=$3
+        olderThan="--confirm"
+        if [ $# == 5 ] && ([ "$4" == "-o" ] || [ "$4" == "--older" ]); then
+            olderThan="--older $5"
+        fi
+        # If days is 0, remove any existing cron job for this process
+        if [[ "$days" -eq 0 ]]; then
+            crontab -l 2>/dev/null | grep -v 'trash' | crontab -
+            echo "Removed trash from crontab."
+        else
+            cronCommand="$(generate_cron_expression "$days") $toolDir/trash.sh --empty $olderThan"
+
+            # Check existing cron job
+            currentCron=$(crontab -l 2>/dev/null | grep 'trash')
+            
+            # Update crontab if necessary
+            if [[ -z "$currentCron" ]]; then
+                (crontab -l 2>/dev/null; echo "$cronCommand") | crontab -
+                echo "$(crontab -l 2>/dev/null | grep 'trash')"
+            elif [[ "$currentCron" != *"$cronCommand"* ]]; then
+                (crontab -l | grep -v 'trash'; echo "$cronCommand") | crontab - 
+                echo "$(crontab -l 2>/dev/null | grep 'trash')"
+            fi
+        fi
+    else
+        echo "Cron requires the following arguments (-p | --print) or (-t | --time [day interval]) or (-t | --time [day interval] -o | --older [days])."
+    fi
+    exit
 fi
 
 # logica de mostrar files en trash
@@ -184,12 +244,55 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
         else
             echo "trash is already empty"
         fi
+
+    elif [ "$2" == "--older" ]; then
+        days_old=$3
+
+        # Read JSON and extract key, date, and path using Python 2
+        python_output=$($PYTHON_CMD -c "
+import json, sys, time
+from datetime import datetime
+
+with open('trash.json', 'r') as f:
+    data = json.load(f)
+
+cur_date = '$curDate'  # Read curDate from Bash
+
+# Convert current date to timestamp
+cur_timestamp = time.mktime(datetime.strptime(cur_date, '%Y-%m-%d_%H-%M-%S').timetuple())
+
+for key, value in data.items():
+    if key == 'fileName':
+        continue
+
+    item_date = value[0]  # Get the stored date
+    item_timestamp = time.mktime(datetime.strptime(item_date, '%Y-%m-%d_%H-%M-%S').timetuple())
+
+    # Calculate the age in days
+    age_days = (cur_timestamp - item_timestamp) / 86400
+
+    # Print items older than days_old
+    if age_days > int('$days_old'):
+        print('%s|%s|%s' % (key, item_date, value[1]))  # key|date|path
+")
+
+        # Process the Python output in Bash
+        while IFS="|" read -r key item_date item_path; do
+            delete=$($PYTHON_CMD $toolDir/trash.py r "$key")
+            if [ "$delete" == "None" ]; then
+                echo "No such file or directory" && exit 3
+            fi
+            cd "$toolDir/trash_can/"
+            rm -R "$key" || exit 3
+            echo "Emptied:      $key ($item_path) is older than $days_old days."
+        done <<< "$python_output"
+
     else
         for var in "$@"; do
             cd "$toolDir"
             if [ "$var" != "-e" ] && [ "$var" != "--empty" ] && [ "$var" != "fileName" ]; then
-                recover=$($PYTHON_CMD $toolDir/trash.py r "$var")
-                if [ "$recover" == "None" ]; then
+                delete=$($PYTHON_CMD $toolDir/trash.py r "$var")
+                if [ "$delete" == "None" ]; then
                     echo "$var : No such file or directory" && exit 3
                 fi
                 cd "$toolDir/trash_can/"
@@ -250,10 +353,10 @@ if [ $# == 1 ]; then
         echo "$fileDir" : No such file or directory.
     elif [ -f "$toolDir/trash_can/$file" ] || [ -d "$toolDir/trash_can/$file" ]; then
         mv "$1" "$toolDir/trash_can/$curDate-$file" || exit 3
-        echo "$prevJson,"$'\n'\"$curDate-$file\":\"$fileDir\"} > "$toolDir/trash.json"
+        echo "$prevJson,"$'\n'\"$curDate-$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
     else
         mv "$1" "$toolDir/trash_can" || exit 3
-        echo "$prevJson,"$'\n'\"$file\":\"$fileDir\"} > "$toolDir/trash.json"
+        echo "$prevJson,"$'\n'\"$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
     fi
 
 # logica de trash multiple files
@@ -266,10 +369,10 @@ else
             echo "$fileDir" : No such file or directory.
         elif [ -f "$toolDir/trash_can/$file" ] || [ -d "$toolDir/trash_can/$file" ]; then
             mv "$x" "$toolDir/trash_can/$curDate-$file" || exit 3
-            echo "$prevJson,"$'\n'\"$curDate-$file\":\"$fileDir\"} > "$toolDir/trash.json"
+            echo "$prevJson,"$'\n'\"$curDate-$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
         else
             mv "$x" "$toolDir/trash_can" || exit 3
-            echo "$prevJson,"$'\n'\"$file\":\"$fileDir\"} > "$toolDir/trash.json"
+            echo "$prevJson,"$'\n'\"$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
         fi
     done
 fi
