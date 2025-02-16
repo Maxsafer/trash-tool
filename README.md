@@ -8,7 +8,7 @@ Navigate to the desired installation path and run:
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/main/installer.sh)"
 ```
-This will create a new folder called `trash_tool` and it will add the following aliases `ts` and `trash`, if these are not recognized manually source the displayed file.
+This will create a new folder called `trash_tool` and it will add the following aliases `ts` and `trash`. If these are not recognized, manually source the displayed file.
 
 Running this installer more than once will not mess with your previously trashed files, but moving the installation folder or renaming it will cause the aliases to break.
 
