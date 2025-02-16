@@ -1,5 +1,9 @@
 #!/bin/bash
 
+mkdir trash_tool
+chmod 775 trash_tool
+cd trash_tool
+
 toolDir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 
 curl https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/main/trash.sh -o trash.sh
