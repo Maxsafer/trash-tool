@@ -7,20 +7,20 @@ curDate=$(date '+%Y-%m-%d_%H-%M-%S')
 toolDir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 if [ ! -d "$toolDir/trash_can" ]; then
     mkdir "$toolDir/trash_can"
-    chmod 775 "$toolDir/trash_can"
+    chmod 700 "$toolDir/trash_can"
 fi
 
 # logica de json presente
 if [ ! -f "$toolDir/trash.json" ]; then
     touch "$toolDir/trash.json"
-    chmod 775 "$toolDir/trash.json"
+    chmod 700 "$toolDir/trash.json"
     echo '{"fileName":["filePath","trashDate"]}' >> "$toolDir/trash.json"
 fi
 
 # logica de python presente
 if [ ! -f "$toolDir/trash.py" ]; then
     touch "$toolDir/trash.py"
-    chmod 775 "$toolDir/trash.py"
+    chmod 700 "$toolDir/trash.py"
 
     # START PYTHON SCRIPT TO WRITE
     echo "from datetime import datetime
