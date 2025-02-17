@@ -22,9 +22,14 @@ else
 fi
 
 # Create directory with user-only permissions
-mkdir -m 700 trash_tool
-cd trash_tool
-
+if [ ! -d "trash_tool" ]; then
+    mkdir -m 700 trash_tool || (echo "Failed to create directory, please check permissions." && exit 1)
+elif [ -d "trash_tool" ]; then
+    echo "'trash_tool' already exists, updating trash.sh and trash.py only."
+else
+    echo "Unexpected directory error, please check permissions." && exit 1
+fi
+cd trash_tool || (echo "Failed to access trash_tool directory, please check permissions." && exit 1)
 toolDir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 
 # Download and set execute permissions for the script
