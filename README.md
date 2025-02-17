@@ -138,7 +138,7 @@ To display help: `trash -h`
 * It uses standard Unix utilities like ls, mv, rm, and crontab.
 
 
-## Feature Development
+## Future Development
 
 * As pointed out by some users, perhaps develop a branch compliant with [FreeDesktop.org](https://specifications.freedesktop.org/trash-spec/latest/) specification.
 * With the previous point in mind, perhaps treat this branch as a mobile installation for certain use cases.
