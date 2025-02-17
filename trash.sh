@@ -238,7 +238,7 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
     if [ "$2" == "--confirm" ]; then
         if [ "$(ls -A $toolDir/trash_can/)" ]; then
             cd "$toolDir/trash_can/"
-            rm * -Rf || exit 3
+            rm -Rf * || exit 3
             rm "$toolDir/trash.json"
             echo "emptied trash can"
         else
