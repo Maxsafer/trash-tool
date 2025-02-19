@@ -1,26 +1,5 @@
 #!/bin/bash
 
-# Detect Python command
-if command -v python &> /dev/null; then
-    PYTHON_CMD="python"
-elif command -v python3 &> /dev/null; then
-    PYTHON_CMD="python3"
-else
-    echo "Python is not installed. Please install Python to continue."
-    exit 1
-fi
-
-# Check Python version
-PYTHON_VERSION="$($PYTHON_CMD -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')"
-REQUIRED_VERSION="2.6.6"
-
-if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$PYTHON_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then 
-    echo "Warning: Python version $REQUIRED_VERSION or higher is required. Current version is $PYTHON_VERSION"
-    exit 1
-else
-    echo "Python version $PYTHON_VERSION detected, installed version meets the requirement."
-fi
-
 # Create directory with user-only permissions
 if [ ! -d "trash_tool" ]; then
     mkdir -m 700 trash_tool || (echo "Failed to create directory, please check permissions." && exit 1)
@@ -36,10 +15,8 @@ toolDir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 curl https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/main/trash.sh -o trash.sh
 chmod 700 trash.sh
 
-# Check if trash.py exists and delete it if it does
-if [ -f "trash.py" ]; then
-    rm "trash.py"
-fi
+curl https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/main/trash_parser.sh -o trash_parser.sh
+chmod 700 trash_parser.sh
 
 # Detect the operating system
 OS="$(uname)"
@@ -67,7 +44,6 @@ fi
 if ! grep -q "alias trash=" "$SHELL_CONFIG_FILE"; then
     echo "alias trash='$toolDir/trash.sh'" >> "$SHELL_CONFIG_FILE"
     echo "alias ts='$toolDir/trash.sh'" >> "$SHELL_CONFIG_FILE"
-    source $SHELL_CONFIG_FILE
     echo "Alias 'trash' and 'ts' added to $SHELL_CONFIG_FILE. Please use 'source $SHELL_CONFIG_FILE' to start using trash."
 else
     echo "Trash alias already exists in $SHELL_CONFIG_FILE"
