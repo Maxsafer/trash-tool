@@ -295,8 +295,8 @@ json=$(cat "$toolDir/trash.json" | tr -d '\n\r' | sed 's/[[:space:]]*//g')
 # Validate JSON structure
 if ! validate_json "$json"; then
     echo "Error: Corrupted JSON file."
-    echo "Manually try fixing it or create a new one. Run 'ts --json-corrupted'"
-    echo "This will create a backup of the old trash.json file and previously trashed files."
+    echo "Manually try fixing $toolDir/trash.json or create a new one. Run 'ts --json-corrupted'"
+    echo "This will create a backup for the old trash.json file and previously trashed files."
     exit 1
 fi
 
