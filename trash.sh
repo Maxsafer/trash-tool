@@ -121,7 +121,7 @@ if [ "$1" == "-r" ] || [ "$1" == "--recover" ]; then
         printf "${BOLD}${BLUE}%-30s %-25s %-s${NC}\n" "grep '$3'" "trashDate" "filePath"
         printf "${WHITE}%.0s-" {1..80}  # Prints 80 dashes
         printf "\n"
-        ("$toolDir/trash_parser.sh" "$toolDir/trash.json" "--list-all") | grep $3
+        FORCE_PRETTY=1 "$toolDir/trash_parser.sh" "$toolDir/trash.json" "--list-all" | grep $3
     else
         for var in "$@"; do
             if [ "$var" != "-r" ] && [ "$var" != "--recover" ] && [ "$var" != "fileName" ]; then
