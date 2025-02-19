@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# remove trailing slash
+sanitize_path() {
+    echo "${1%/}"
+}
+
 # SEGUIR PROBANDO, PERO PARECE QUE FUNCIONA
 parse_json() {
     local json_file=$1
@@ -10,6 +15,7 @@ parse_json() {
     local json=$(cat "$json_file" | tr -d '\n\r' | sed 's/[[:space:]]*//g')
     
     if [[ -n "$remove_key" ]]; then
+        remove_key=$(sanitize_path "$remove_key")
         # Extract the path before removing the entry
         local path=$(echo "$json" | grep -o "\"$remove_key\":\[[^]]*\]" | grep -o '"[^"]*"' | tail -n 1 | tr -d '"')
         # Use the same pattern matching from query to remove the entry
