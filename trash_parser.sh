@@ -5,6 +5,19 @@ sanitize_path() {
     echo "${1%/}"
 }
 
+# Validate JSON structure
+validate_json() {
+    local json_content="$1"
+    # Check if JSON starts with '{' and ends with '}'
+    if [[ "$json_content" =~ ^\{.*\}$ ]]; then
+        # Check for key-value pattern
+        if [[ "$json_content" =~ \"[^\"]+\":\[\"[^\"]*\",\"[^\"]*\"\] ]]; then
+            return 0  # Valid JSON structure
+        fi
+    fi
+    return 1  # Invalid JSON structure
+}
+
 # SEGUIR PROBANDO, PERO PARECE QUE FUNCIONA
 parse_json() {
     local json_file=$1
@@ -13,13 +26,19 @@ parse_json() {
     
     # Read and normalize JSON
     local json=$(cat "$json_file" | tr -d '\n\r' | sed 's/[[:space:]]*//g')
+
+    # Validate JSON structure
+    if ! validate_json "$json"; then
+        echo "Error: Corrupted JSON file."
+        exit 1
+    fi
     
     if [[ -n "$remove_key" ]]; then
         remove_key=$(sanitize_path "$remove_key")
-        # Extract the path before removing the entry
-        local path=$(echo "$json" | grep -o "\"$remove_key\":\[[^]]*\]" | grep -o '"[^"]*"' | tail -n 1 | tr -d '"')
-        # Use the same pattern matching from query to remove the entry
-        local new_json=$(echo "$json" | sed "s/,\"$remove_key\":\[[^]]*\]//g" | sed "s/\"$remove_key\":\[[^]]*\],//g")
+        local escaped_key=$(echo "$remove_key" | sed 's/[][\/.^$*+?(){}|_-]/\\&/g')
+        local path=$(echo "$json" | grep -o "\"$escaped_key\":\[[^]]*\]" | grep -o '"[^"]*"' | tail -n 1 | tr -d '"')
+        local new_json=$(echo "$json" | sed -E "s/(,)?\"$escaped_key\":\[[^]]*\]//g")
+        
         if [[ "$new_json" != "$json" ]]; then
             printf "%s" "$new_json" > "$json_file"
             
@@ -30,16 +49,15 @@ parse_json() {
             
             # Check paths and return appropriate value
             if [[ ! -e "$path" && ! -f "$path" ]]; then
-                echo "$path"
+                printf "%s" "$path"
             elif [[ ! -e "$path_with_key" && ! -f "$path_with_key" ]]; then
-                echo "$path_with_key"
+                printf "%s" "$path_with_key"
             else
-                # Generate timestamp in the required format
-                local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
-                echo "${dirpath}/${timestamp}-${filename}"
+                # Generate UUID instead of timestamp
+                printf "%s" "${dirpath}/$(uuidgen)-${filename}"
             fi
         else
-            echo "None"
+            printf "None"
         fi
         return
     fi
@@ -55,7 +73,7 @@ parse_json() {
         if [ ! -t 1 ] && [ -z "$FORCE_PRETTY" ]; then
             while [[ "$json" =~ \"([^\"]+)\":\[\"([^\"]+)\",\"([^\"]+)\"\] ]]; do
                 if [ "${BASH_REMATCH[1]}" != "fileName" ]; then
-                    echo "${BASH_REMATCH[1]}|${BASH_REMATCH[2]}|${BASH_REMATCH[3]}"
+                    printf "%s|%s|%s\n" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
                 fi
                 json="${json#*"${BASH_REMATCH[0]}"}"
             done
@@ -69,14 +87,24 @@ parse_json() {
         BOLD='\033[0;1m'
         NC='\033[0m' # No Color
 
-        # Header with fixed width
-        printf "${BOLD}${BLUE}%-30s %-25s %-s${NC}\n" "fileName" "trashDate" "filePath"
-        printf "${WHITE}%.0s-" {1..80}  # Prints 80 dashes
+        # Calculate max length of filenames dynamically
+        max_filename_length=30  # Start with minimum width
+        json_for_calc="$json"
+        while [[ "$json_for_calc" =~ \"([^\"]+)\":\[ ]]; do
+            current_length=${#BASH_REMATCH[1]}
+            ((current_length > max_filename_length)) && max_filename_length=$current_length
+            json_for_calc="${json_for_calc#*"${BASH_REMATCH[0]}"}"
+        done
+
+        # Header with dynamic width
+        printf "${BOLD}${BLUE}%-${max_filename_length}s %-25s %-s${NC}\n" "fileName" "trashDate" "filePath"
+        printf "${WHITE}%.0s-" $(seq 1 $((max_filename_length + 45)))
         printf "\n"
-        
+
+        # Print entries with adjusted width
         while [[ "$json" =~ \"([^\"]+)\":\[\"([^\"]+)\",\"([^\"]+)\"\] ]]; do
             if [ "${BASH_REMATCH[1]}" != "fileName" ]; then
-                printf "${GREEN}%-30s %-25s %-s${NC}\n" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
+                printf "${GREEN}%-${max_filename_length}s %-25s %-s${NC}\n" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
             fi
             json="${json#*"${BASH_REMATCH[0]}"}"
         done
