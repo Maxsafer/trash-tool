@@ -114,7 +114,9 @@ fi
 
 # logica de recover files en trash
 if [ "$1" == "-r" ] || [ "$1" == "--recover" ]; then
-    if [ $# == 2 ]  && ([ "$2" == "-d" ] || [ "$2" == "--dictionary" ]); then
+    if [ $# == 1 ]; then
+        echo "Recover requires the following arguments (-d | --dictionary [fileName]) or (-d | --dictionary [fileName] [fileName])."
+    elif [ $# == 2 ]  && ([ "$2" == "-d" ] || [ "$2" == "--dictionary" ]); then
         "$toolDir/trash_parser.sh" "$toolDir/trash.json" "--list-all"
     elif [ $# == 3 ]  && ([ "$2" == "-d" ] || [ "$2" == "--dictionary" ]); then
         # Header with fixed width
@@ -139,12 +141,16 @@ fi
 
 # logica de borrar files en trash
 if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
+    if [ $# == 1 ]; then
+        echo "Empty requires the following arguments (-c | --confirm) or (-o | --older [days])."
+        exit 3
+    fi
     if [ "$2" == "--confirm" ]; then
         if [ "$(ls -A $toolDir/trash_can/)" ]; then
             cd "$toolDir/trash_can/"
             rm -Rf * || exit 3
             rm "$toolDir/trash.json"
-            echo " trash can"
+            echo "emptied trash can"
         else
             echo "trash is already empty"
         fi
@@ -168,7 +174,7 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
                 # Remove from trash directory
                 cd "$toolDir/trash_can/"
                 rm -Rf "$key" || exit 3
-                echo ":      $key ($path) is older than $days_old days."
+                echo "Emptied:      $key ($path) is older than $days_old days."
                 files_processed=$((files_processed + 1))
             fi
         done < <("$toolDir/trash_parser.sh" "$toolDir/trash.json" --list-all)
