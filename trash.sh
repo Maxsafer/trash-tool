@@ -119,9 +119,17 @@ if [ "$1" == "-r" ] || [ "$1" == "--recover" ]; then
     elif [ $# == 2 ]  && ([ "$2" == "-d" ] || [ "$2" == "--dictionary" ]); then
         "$toolDir/trash_parser.sh" "$toolDir/trash.json" "--list-all"
     elif [ $# == 3 ]  && ([ "$2" == "-d" ] || [ "$2" == "--dictionary" ]); then
-        # Header with fixed width
-        printf "${BOLD}${BLUE}%-30s %-25s %-s${NC}\n" "grep '$3'" "trashDate" "filePath"
-        printf "${WHITE}%.0s-" {1..80}  # Prints 80 dashes
+        # Calculate max length of filenames dynamically
+        max_filename_length=30  # Start with minimum width
+        json_for_calc=$("$toolDir/trash_parser.sh" "$toolDir/trash.json" "--list-all")
+        while IFS="|" read -r filename trashDate filePath; do
+            current_length=${#filename}
+            ((current_length > max_filename_length)) && max_filename_length=$current_length
+        done <<< "$json_for_calc"
+
+        # Header with dynamic width
+        printf "${BOLD}${BLUE}%-${max_filename_length}s %-25s %-s${NC}\n" "grep '$3'" "trashDate" "filePath"
+        printf "${WHITE}%.0s-" $(seq 1 $((max_filename_length + 45)))
         printf "\n"
         FORCE_PRETTY=1 "$toolDir/trash_parser.sh" "$toolDir/trash.json" "--list-all" | grep $3
     else
@@ -131,7 +139,8 @@ if [ "$1" == "-r" ] || [ "$1" == "--recover" ]; then
                 if [ "$recover" == "None" ]; then
                     echo "$var : No such file or directory" && exit 3
                 fi
-                mkdir -p "${recover%/*}/" && mv "$toolDir/trash_can/$var" "$recover" || exit 3
+                new_name=$(basename "$recover")
+                mkdir -p "${recover%/*}/" && mv "$toolDir/trash_can/$var" "${recover%/*}/$new_name" || exit 3
                 echo "recovered:      $var     to      $recover"
             fi
         done
@@ -260,8 +269,9 @@ if [ $# == 1 ]; then
     if [ ! -f "$fileDir" ] && [ ! -d "$fileDir" ]; then
         echo "$1" : No such file or directory. && exit 3
     elif [ -f "$toolDir/trash_can/$file" ] || [ -d "$toolDir/trash_can/$file" ]; then
-        mv "$1" "$toolDir/trash_can/$curDate-$file" || exit 3
-        echo "$prevJson,"$'\n'\"$curDate-$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
+        uuid="$(uuidgen)"
+        mv "$1" "$toolDir/trash_can/$uuid-$file" || exit 3
+        echo "$prevJson,"$'\n'\"$uuid-$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
     else
         mv "$1" "$toolDir/trash_can"
         echo "$prevJson,"$'\n'\"$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
@@ -276,8 +286,9 @@ else
         if [ ! -f "$fileDir" ] && [ ! -d "$fileDir" ]; then
             echo "$x" : No such file or directory. && exit 3
         elif [ -f "$toolDir/trash_can/$file" ] || [ -d "$toolDir/trash_can/$file" ]; then
-            mv "$x" "$toolDir/trash_can/$curDate-$file" || exit 3
-            echo "$prevJson,"$'\n'\"$curDate-$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
+            uuid="$(uuidgen)"
+            mv "$x" "$toolDir/trash_can/$uuid-$file" || exit 3
+            echo "$prevJson,"$'\n'\"$uuid-$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
         else
             mv "$x" "$toolDir/trash_can" || exit 3
             echo "$prevJson,"$'\n'\"$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
