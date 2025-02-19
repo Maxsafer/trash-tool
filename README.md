@@ -1,7 +1,7 @@
 # Trash Tool (CLI Utility)
 This tool is a Bash utility designed to manage files and directories by moving them to a designated "trash can" directory, allowing for recovery or permanent deletion at a later time. This utility mimics a recycle bin or trash functionality commonly found in graphical operating systems but is implemented for command-line environments. Below is a detailed high-level documentation of this tool, including its functionality and usage examples.
 
-I came up with this idea when I was working on a highly restrictive Linux environment, that is why only Python 2.6.6 or higher is needed as a dependency. It also works at the permission level you configure it to run at.
+I came up with this idea when I was working on a highly restrictive Linux environment. It also works at the permission level you configure it to run at.
 
 ## Installation:
 Navigate to the desired installation path and run:
@@ -25,7 +25,6 @@ The tool performs the following main functions:
 
 The script sets up a directory named trash_can in the same location as the script itself to store trashed files.
 It creates a trash.json file to keep track of the original file paths and the date they were trashed.
-A Python script trash.py is generated to handle JSON operations for displaying and recovering files.
 
 ## Key Functionalities:
 
@@ -134,7 +133,6 @@ To display help: `trash -h`
 
 ## Dependencies:
 
-* Requires Python 2.6.6 or newer to be installed for JSON operations.
 * It uses standard Unix utilities like ls, mv, rm, and crontab.
 
 
