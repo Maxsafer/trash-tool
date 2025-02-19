@@ -136,7 +136,9 @@ if [ "$1" == "-r" ] || [ "$1" == "--recover" ]; then
         for var in "$@"; do
             if [ "$var" != "-r" ] && [ "$var" != "--recover" ] && [ "$var" != "fileName" ]; then
                 recover=$("$toolDir/trash_parser.sh" "$toolDir/trash.json" "--remove" "$var")
-                if [ "$recover" == "None" ]; then
+                if [ "$recover" == "Error: Corrupted JSON file." ]; then
+                    echo "Error: Corrupted JSON file." && exit 3
+                elif [ "$recover" == "None" ]; then
                     echo "$var : No such file or directory" && exit 3
                 fi
                 new_name=$(basename "$recover")
@@ -214,6 +216,15 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
     exit
 fi
 
+if [ "$1" == "--json-corrupted" ]; then
+    echo "Creating backup of the old trash.json file and previously trashed files..."
+    mkdir -p "$toolDir/trash_can_backups"
+    mv "$toolDir/trash_can" "$toolDir/trash_can_backups/trash_can_$curDate"
+    mv "$toolDir/trash.json" "$toolDir/trash_can_backups/trash.json_$curDate"
+    echo "Done."
+    exit
+fi
+
 # logica de help
 if [ $# == 0 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     echo "Trash Tool v1.1"
@@ -263,6 +274,30 @@ if [ $# == 0 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
 elif [[ "$1" =~ ^"-" ]] || [[ "$1" =~ ^"--" ]]; then
     echo "Unknown argument, for help please use: trash -h"
     exit 3
+fi
+
+# Validate JSON structure
+validate_json() {
+    local json_content="$1"
+    # Check if JSON starts with '{' and ends with '}'
+    if [[ "$json_content" =~ ^\{.*\}$ ]]; then
+        # Check for key-value pattern
+        if [[ "$json_content" =~ \"[^\"]+\":\[\"[^\"]*\",\"[^\"]*\"\] ]]; then
+            return 0  # Valid JSON structure
+        fi
+    fi
+    return 1  # Invalid JSON structure
+}
+
+# Read and normalize JSON
+json=$(cat "$toolDir/trash.json" | tr -d '\n\r' | sed 's/[[:space:]]*//g')
+
+# Validate JSON structure
+if ! validate_json "$json"; then
+    echo "Error: Corrupted JSON file."
+    echo "Manually try fixing it or create a new one. Run 'ts --json-corrupted'"
+    echo "This will create a backup of the old trash.json file and previously trashed files."
+    exit 1
 fi
 
 # logica de trash file/folder
