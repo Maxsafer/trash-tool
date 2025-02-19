@@ -144,7 +144,7 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
             cd "$toolDir/trash_can/"
             rm -Rf * || exit 3
             rm "$toolDir/trash.json"
-            echo "emptied trash can"
+            echo " trash can"
         else
             echo "trash is already empty"
         fi
@@ -168,7 +168,7 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
                 # Remove from trash directory
                 cd "$toolDir/trash_can/"
                 rm -Rf "$key" || exit 3
-                echo "Emptied:      $key ($path) is older than $days_old days."
+                echo ":      $key ($path) is older than $days_old days."
                 files_processed=$((files_processed + 1))
             fi
         done < <("$toolDir/trash_parser.sh" "$toolDir/trash.json" --list-all)
@@ -180,7 +180,6 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
             cd "$toolDir"
             if [ "$var" != "-e" ] && [ "$var" != "--empty" ] && [ "$var" != "fileName" ]; then
                 delete=$("$toolDir/trash_parser.sh" "$toolDir/trash.json" "--remove" "$var")
-                echo "$delete"
                 if [ "$delete" == "None" ]; then
                     echo "$var : No such file or directory." && exit 3
                 fi
