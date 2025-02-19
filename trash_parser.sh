@@ -16,7 +16,22 @@ parse_json() {
         local new_json=$(echo "$json" | sed "s/,\"$remove_key\":\[[^]]*\]//g" | sed "s/\"$remove_key\":\[[^]]*\],//g")
         if [[ "$new_json" != "$json" ]]; then
             printf "%s" "$new_json" > "$json_file"
-            echo "$path"
+            
+            # Get the original filename without path
+            local filename=$(basename "$path")
+            local dirpath=$(dirname "$path")
+            local path_with_key="${dirpath}/${remove_key}"
+            
+            # Check paths and return appropriate value
+            if [[ ! -e "$path" && ! -f "$path" ]]; then
+                echo "$path"
+            elif [[ ! -e "$path_with_key" && ! -f "$path_with_key" ]]; then
+                echo "$path_with_key"
+            else
+                # Generate timestamp in the required format
+                local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
+                echo "${dirpath}/${timestamp}-${filename}"
+            fi
         else
             echo "None"
         fi
@@ -30,7 +45,18 @@ parse_json() {
 
     # List all
     if [[ "$query_key" == "--list-all" ]]; then
-        # Colors
+        # If being piped (no TTY), output raw format
+        if [ ! -t 1 ] && [ -z "$FORCE_PRETTY" ]; then
+            while [[ "$json" =~ \"([^\"]+)\":\[\"([^\"]+)\",\"([^\"]+)\"\] ]]; do
+                if [ "${BASH_REMATCH[1]}" != "fileName" ]; then
+                    echo "${BASH_REMATCH[1]}|${BASH_REMATCH[2]}|${BASH_REMATCH[3]}"
+                fi
+                json="${json#*"${BASH_REMATCH[0]}"}"
+            done
+            return
+        fi
+
+        # Colors for terminal display
         BLUE='\033[0;94m'
         GREEN='\033[0;92m'
         WHITE='\033[0;37m'
