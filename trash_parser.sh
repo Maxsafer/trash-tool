@@ -54,7 +54,7 @@ parse_json() {
                 printf "%s" "$path_with_key"
             else
                 # Generate UUID instead of timestamp
-                printf "%s" "${dirpath}/$(uuidgen)-${filename}"
+                printf "%s" "${dirpath}/${filename}-$(uuidgen)"
             fi
         else
             printf "None"
@@ -78,6 +78,12 @@ parse_json() {
                 json="${json#*"${BASH_REMATCH[0]}"}"
             done
             return
+        fi
+
+        # Validate JSON structure
+        if ! validate_json "$json"; then
+            echo "Error: Corrupted JSON file."
+            exit 1
         fi
 
         # Colors for terminal display
