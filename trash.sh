@@ -161,6 +161,7 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
             rm "$toolDir/trash.json"
             echo "emptied trash can"
         else
+            rm "$toolDir/trash.json"
             echo "trash is already empty"
         fi
 
@@ -169,6 +170,10 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
         files_processed=0
         # Process each entry
         while IFS="|" read -r key date path; do
+            # Skip if date is empty
+            if [[ -z "$date" ]]; then
+                echo  "Error: Date is empty for key: $key" && exit 3
+            fi
             # Convert dates to timestamps for comparison (macOS compatible)
             item_timestamp=$(date -j -f "%Y-%m-%d_%H-%M-%S" "$date" "+%s")
             current_timestamp=$(date -j -f "%Y-%m-%d_%H-%M-%S" "$curDate" "+%s")
@@ -195,7 +200,9 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
             cd "$toolDir"
             if [ "$var" != "-e" ] && [ "$var" != "--empty" ] && [ "$var" != "fileName" ]; then
                 delete=$("$toolDir/trash_parser.sh" "$toolDir/trash.json" "--remove" "$var")
-                if [ "$delete" == "None" ]; then
+                if [ "$delete" == "Error: Corrupted JSON file." ]; then
+                    echo "Error: Corrupted JSON file." && exit 3
+                elif [ "$delete" == "None" ]; then
                     echo "$var : No such file or directory." && exit 3
                 fi
                 cd "$toolDir/trash_can/"
@@ -270,8 +277,8 @@ if [ $# == 1 ]; then
         echo "$1" : No such file or directory. && exit 3
     elif [ -f "$toolDir/trash_can/$file" ] || [ -d "$toolDir/trash_can/$file" ]; then
         uuid="$(uuidgen)"
-        mv "$1" "$toolDir/trash_can/$uuid-$file" || exit 3
-        echo "$prevJson,"$'\n'\"$uuid-$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
+        mv "$1" "$toolDir/trash_can/$file-$uuid" || exit 3
+        echo "$prevJson,"$'\n'\"$file-$uuid\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
     else
         mv "$1" "$toolDir/trash_can"
         echo "$prevJson,"$'\n'\"$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
@@ -287,8 +294,8 @@ else
             echo "$x" : No such file or directory. && exit 3
         elif [ -f "$toolDir/trash_can/$file" ] || [ -d "$toolDir/trash_can/$file" ]; then
             uuid="$(uuidgen)"
-            mv "$x" "$toolDir/trash_can/$uuid-$file" || exit 3
-            echo "$prevJson,"$'\n'\"$uuid-$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
+            mv "$x" "$toolDir/trash_can/$file-$uuid" || exit 3
+            echo "$prevJson,"$'\n'\"$file-$uuid\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
         else
             mv "$x" "$toolDir/trash_can" || exit 3
             echo "$prevJson,"$'\n'\"$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
