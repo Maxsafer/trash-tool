@@ -80,12 +80,6 @@ parse_json() {
             return
         fi
 
-        # Validate JSON structure
-        if ! validate_json "$json"; then
-            echo "Error: Corrupted JSON file."
-            exit 1
-        fi
-
         # Colors for terminal display
         BLUE='\033[0;94m'
         GREEN='\033[0;92m'
