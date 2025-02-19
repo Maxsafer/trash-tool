@@ -1,10 +1,19 @@
 #!/bin/bash
 
-#SET DATE
+# SET DATE
 curDate=$(date '+%Y-%m-%d_%H-%M-%S')
 
-# logica de lo primero que haga ver que su ruta de trash_can existe y si no, crearla
+# COLORS
+BLUE='\033[0;94m'
+GREEN='\033[0;92m'
+WHITE='\033[0;37m'
+BOLD='\033[0;1m'
+NC='\033[0m' # No Color
+
+# el path de trash_tool
 toolDir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+
+# logica de lo primero que haga ver que su ruta de trash_can existe y si no, crearla
 if [ ! -d "$toolDir/trash_can" ]; then
     mkdir "$toolDir/trash_can"
     chmod 700 "$toolDir/trash_can"
@@ -15,115 +24,6 @@ if [ ! -f "$toolDir/trash.json" ]; then
     touch "$toolDir/trash.json"
     chmod 700 "$toolDir/trash.json"
     echo '{"fileName":["filePath","trashDate"]}' >> "$toolDir/trash.json"
-fi
-
-# logica de python presente
-if [ ! -f "$toolDir/trash.py" ]; then
-    touch "$toolDir/trash.py"
-    chmod 700 "$toolDir/trash.py"
-
-    # START PYTHON SCRIPT TO WRITE
-    echo "from datetime import datetime
-import platform
-import json
-import sys
-import os
-
-def getRecover(key):
-    try:
-        f = open('{toolDir}/trash.json'.format(toolDir=toolDir),)
-        data = json.load(f)
-
-        # path con el og file name
-        path = str(data.get(key)[1])
-
-        # remove the key from json file
-        data.pop(key)
-        f2 = open('{toolDir}/trash.json'.format(toolDir=toolDir), 'w')
-        f2.write(json.dumps(data).replace(\"'\",'\"'))
-
-        fileName = path.split(\"/\")[-1]
-
-        # path con el key file name
-        pathWKey = key.join(path.rsplit(fileName, 1))
-
-        # for Windows
-        ogpath = path
-        ogpathWKey = pathWKey
-        if platform.system() == \"Windows\":
-            path = path.replace(path[0:2], \"{path}:\".format(path=(path[1]).upper()))
-            pathWKey = key.join(path.rsplit(fileName, 1))
-
-        # if file/folder does not exist
-        if (not os.path.isfile(path)) and (not os.path.exists(path)):
-            # print(\"lo regresamos con su nombre original\")
-            print(ogpath)
-
-        # if file/folder exists
-        elif (not os.path.isfile(pathWKey)) and (not os.path.exists(pathWKey)):
-            # print(\"lo regresamos con su nombre de llave\")
-            print(ogpathWKey)
-
-        # fail-safe para por si existe el nombre de la key, se le agregue una nueva fecha al inicio
-        else:
-            # print(\"og name existia, key name existia, nuevo name con fecha now\")
-            print(ogpath.replace((ogpath.split(\"/\")[-1]), \"\")+\"{frmted}-{fileNme}\".format(frmted=(str(datetime.now()).replace(\":\",\".\")).replace(\" \", \"_\"), fileNme=fileName))
-
-        exit()
-    except Exception as e:
-        #print(e)
-        print(\"None\")
-    finally:
-        if \"f\" in locals(): f.close()
-        if \"f2\" in locals(): f2.close()
-
-def getDisplay():
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-    BOLD = '\033[1m'
-    RESET = '\033[0m'
-    
-    try:
-        f = open('{toolDir}/trash.json'.format(toolDir=toolDir))
-        data = json.load(f)
-        
-        # Print header with bold and blue
-        print(f'{BOLD}{BLUE}fileName : trashDate , filePath{RESET}')
-        print('-' * 40)  # Separator line
-        
-        # Skip header and print remaining items in color
-        first_item = True
-        for item in data:
-            if first_item:
-                first_item = False
-                continue
-            print(f'{BLUE}{item}{RESET} : {GREEN}{data.get(item)}{RESET}')
-            
-        exit()
-    except Exception as e:
-        print(e)
-    finally:
-        if 'f' in locals(): f.close()
-
-if __name__ == \"__main__\":
-    toolDir = '$toolDir'
-    if platform.system() == 'Windows':
-        toolDir = toolDir[1:2].upper() + ':' + toolDir[2:-1] + toolDir[toolDir.index(toolDir[-1])]
-    if str(sys.argv[1]) == \"d\":
-        getDisplay()
-    elif str(sys.argv[1]) == \"r\":
-        getRecover(sys.argv[2])" >> "$toolDir/trash.py"
-    # END OF PYTHON SCRIPT TO WRITE
-fi
-
-# logica de python presente
-if command -v python &> /dev/null; then
-    PYTHON_CMD="python"
-elif command -v python3 &> /dev/null; then
-    PYTHON_CMD="python3"
-else
-    echo "Python is not installed. Please install Python to continue."
-    exit 1
 fi
 
 # funcion para crear la expresion cron
@@ -215,13 +115,17 @@ fi
 # logica de recover files en trash
 if [ "$1" == "-r" ] || [ "$1" == "--recover" ]; then
     if [ $# == 2 ]  && ([ "$2" == "-d" ] || [ "$2" == "--dictionary" ]); then
-        echo "$($PYTHON_CMD $toolDir/trash.py d)"
+        "$toolDir/trash_parser.sh" "$toolDir/trash.json" "--list-all"
     elif [ $# == 3 ]  && ([ "$2" == "-d" ] || [ "$2" == "--dictionary" ]); then
-        echo "$($PYTHON_CMD $toolDir/trash.py d)" | grep $3
+        # Header with fixed width
+        printf "${BOLD}${BLUE}%-30s %-25s %-s${NC}\n" "grep '$3'" "trashDate" "filePath"
+        printf "${WHITE}%.0s-" {1..80}  # Prints 80 dashes
+        printf "\n"
+        ("$toolDir/trash_parser.sh" "$toolDir/trash.json" "--list-all") | grep $3
     else
         for var in "$@"; do
             if [ "$var" != "-r" ] && [ "$var" != "--recover" ] && [ "$var" != "fileName" ]; then
-                recover=$($PYTHON_CMD $toolDir/trash.py r "$var")
+                recover=$("$toolDir/trash_parser.sh" "$toolDir/trash.json" "--remove" "$var")
                 if [ "$recover" == "None" ]; then
                     echo "$var : No such file or directory" && exit 3
                 fi
@@ -247,53 +151,38 @@ if [ "$1" == "-e" ] || [ "$1" == "--empty" ]; then
 
     elif [ "$2" == "--older" ]; then
         days_old=$3
-
-        # Read JSON and extract key, date, and path using Python 2
-        python_output=$($PYTHON_CMD -c "
-import json, sys, time
-from datetime import datetime
-
-with open('$toolDir/trash.json', 'r') as f:
-    data = json.load(f)
-
-cur_date = '$curDate'  # Read curDate from Bash
-
-# Convert current date to timestamp
-cur_timestamp = time.mktime(datetime.strptime(cur_date, '%Y-%m-%d_%H-%M-%S').timetuple())
-
-for key, value in data.items():
-    if key == 'fileName':
-        continue
-
-    item_date = value[0]  # Get the stored date
-    item_timestamp = time.mktime(datetime.strptime(item_date, '%Y-%m-%d_%H-%M-%S').timetuple())
-
-    # Calculate the age in days
-    age_days = (cur_timestamp - item_timestamp) / 86400
-
-    # Print items older than days_old
-    if age_days > int('$days_old'):
-        print('%s|%s|%s' % (key, item_date, value[1]))  # key|date|path
-")
-
-        # Process the Python output in Bash
-        while IFS="|" read -r key item_date item_path; do
-            delete=$($PYTHON_CMD $toolDir/trash.py r "$key")
-            if [ "$delete" == "None" ]; then
-                echo "No such file or directory" && exit 3
+        files_processed=0
+        # Process each entry
+        while IFS="|" read -r key date path; do
+            # Convert dates to timestamps for comparison (macOS compatible)
+            item_timestamp=$(date -j -f "%Y-%m-%d_%H-%M-%S" "$date" "+%s")
+            current_timestamp=$(date -j -f "%Y-%m-%d_%H-%M-%S" "$curDate" "+%s")
+            age_days=$(( (current_timestamp - item_timestamp) / 86400 ))
+            
+            if [ "$age_days" -ge "$days_old" ]; then
+                # Remove from JSON
+                delete=$("$toolDir/trash_parser.sh" "$toolDir/trash.json" "--remove" "$key")
+                if [ "$delete" == "None" ]; then
+                    echo "$var : No such file or directory." && exit 3
+                fi
+                # Remove from trash directory
+                cd "$toolDir/trash_can/"
+                rm -Rf "$key" || exit 3
+                echo "Emptied:      $key ($path) is older than $days_old days."
+                files_processed=$((files_processed + 1))
             fi
-            cd "$toolDir/trash_can/"
-            rm -Rf "$key" || exit 3
-            echo "Emptied:      $key ($item_path) is older than $days_old days."
-        done <<< "$python_output"
-
+        done < <("$toolDir/trash_parser.sh" "$toolDir/trash.json" --list-all)
+        if [ $files_processed -eq 0 ]; then
+            echo "No trash older than $days_old day(s)."
+        fi
     else
         for var in "$@"; do
             cd "$toolDir"
             if [ "$var" != "-e" ] && [ "$var" != "--empty" ] && [ "$var" != "fileName" ]; then
-                delete=$($PYTHON_CMD $toolDir/trash.py r "$var")
+                delete=$("$toolDir/trash_parser.sh" "$toolDir/trash.json" "--remove" "$var")
+                echo "$delete"
                 if [ "$delete" == "None" ]; then
-                    echo "$var : No such file or directory" && exit 3
+                    echo "$var : No such file or directory." && exit 3
                 fi
                 cd "$toolDir/trash_can/"
                 rm -Rf "$var" || exit 3
@@ -357,16 +246,19 @@ fi
 
 # logica de trash file/folder
 if [ $# == 1 ]; then
+    if [ "$1" == "fileName" ]; then
+        echo "[Error] Reserved trash name: 'fileName'." && exit 3
+    fi
     file=$(basename -- "$1")
     prevJson=$(echo $(cat "$toolDir/trash.json") | sed 's/.$//')
-    fileDir=$(readlink -f "$1") || exit 3
+    fileDir=$(readlink -f "$1")
     if [ ! -f "$fileDir" ] && [ ! -d "$fileDir" ]; then
-        echo "$fileDir" : No such file or directory.
+        echo "$1" : No such file or directory. && exit 3
     elif [ -f "$toolDir/trash_can/$file" ] || [ -d "$toolDir/trash_can/$file" ]; then
         mv "$1" "$toolDir/trash_can/$curDate-$file" || exit 3
         echo "$prevJson,"$'\n'\"$curDate-$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
     else
-        mv "$1" "$toolDir/trash_can" || exit 3
+        mv "$1" "$toolDir/trash_can"
         echo "$prevJson,"$'\n'\"$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
     fi
 
@@ -375,9 +267,9 @@ else
     for x in "$@"; do
         file=$(basename -- "$x")
         prevJson=$(echo $(cat "$toolDir/trash.json") | sed 's/.$//')
-        fileDir=$(readlink -f "$x") || exit 3
+        fileDir=$(readlink -f "$x")
         if [ ! -f "$fileDir" ] && [ ! -d "$fileDir" ]; then
-            echo "$fileDir" : No such file or directory.
+            echo "$x" : No such file or directory. && exit 3
         elif [ -f "$toolDir/trash_can/$file" ] || [ -d "$toolDir/trash_can/$file" ]; then
             mv "$x" "$toolDir/trash_can/$curDate-$file" || exit 3
             echo "$prevJson,"$'\n'\"$curDate-$file\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
