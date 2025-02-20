@@ -129,7 +129,7 @@ if [ "$1" == "-r" ] || [ "$1" == "--recover" ]; then
 
         # Header with dynamic width
         printf "${BOLD}${BLUE}%-${max_filename_length}s %-25s %-s${NC}\n" "grep '$3'" "trashDate" "filePath"
-        printf "${WHITE}%.0s-" $(seq 1 $((max_filename_length + 45)))
+        printf "${WHITE}%.0s-" $(seq 1 $((max_filename_length + 35)))
         printf "\n"
         FORCE_PRETTY=1 "$toolDir/trash_parser.sh" "$toolDir/trash.json" "--list-all" | grep $3
     else
