@@ -98,7 +98,7 @@ parse_json() {
 
         # Header with dynamic width
         printf "${BOLD}${BLUE}%-${max_filename_length}s %-25s %-s${NC}\n" "fileName" "trashDate" "filePath"
-        printf "${WHITE}%.0s-" $(seq 1 $((max_filename_length + 45)))
+        printf "${WHITE}%.0s-" $(seq 1 $((max_filename_length + 35)))
         printf "\n"
 
         # Print entries with adjusted width
