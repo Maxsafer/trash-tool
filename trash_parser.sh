@@ -53,8 +53,8 @@ parse_json() {
             elif [[ ! -e "$path_with_key" && ! -f "$path_with_key" ]]; then
                 printf "%s" "$path_with_key"
             else
-                # Generate UUID instead of timestamp
-                printf "%s" "${dirpath}/${filename}-$(uuidgen)"
+                # Generate unique identifier
+                printf "%s" "${dirpath}/${filename}-$(date +%s%N | sha256sum | cut -c1-12)"
             fi
         else
             printf "None"

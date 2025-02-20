@@ -295,8 +295,8 @@ json=$(cat "$toolDir/trash.json" | tr -d '\n\r' | sed 's/[[:space:]]*//g')
 # Validate JSON structure
 if ! validate_json "$json"; then
     echo "Error: Corrupted JSON file."
-    echo "Manually try fixing $toolDir/trash.json or create a new one. Run 'ts --json-corrupted'"
-    echo "This will create a backup for the old trash.json file and previously trashed files."
+    echo "Manually try fixing it or create a new one. Run 'ts --json-corrupted'"
+    echo "This will create a backup of the old trash.json file and previously trashed files."
     exit 1
 fi
 
@@ -311,7 +311,7 @@ if [ $# == 1 ]; then
     if [ ! -f "$fileDir" ] && [ ! -d "$fileDir" ]; then
         echo "$1" : No such file or directory. && exit 3
     elif [ -f "$toolDir/trash_can/$file" ] || [ -d "$toolDir/trash_can/$file" ]; then
-        uuid="$(uuidgen)"
+        uuid="$(date +%s%N | sha256sum | cut -c1-12)"
         mv "$1" "$toolDir/trash_can/$file-$uuid" || exit 3
         echo "$prevJson,"$'\n'\"$file-$uuid\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
     else
@@ -328,7 +328,7 @@ else
         if [ ! -f "$fileDir" ] && [ ! -d "$fileDir" ]; then
             echo "$x" : No such file or directory. && exit 3
         elif [ -f "$toolDir/trash_can/$file" ] || [ -d "$toolDir/trash_can/$file" ]; then
-            uuid="$(uuidgen)"
+            uuid="$(date +%s%N | sha256sum | cut -c1-12)"
             mv "$x" "$toolDir/trash_can/$file-$uuid" || exit 3
             echo "$prevJson,"$'\n'\"$file-$uuid\":[\"$curDate\",\"$fileDir\"]} > "$toolDir/trash.json"
         else

@@ -127,7 +127,7 @@ teardown() {
     run bash "$TRASH_TOOL_PATH/trash.sh" original.txt
     [ -f "$TRASH_TOOL_PATH/trash_can/original.txt" ]
     # Check for UUID pattern in filename
-    [[ -n $(find "$TRASH_TOOL_PATH/trash_can" -name "*-original.txt" -type f) ]]
+    [[ -n $(find "$TRASH_TOOL_PATH/trash_can" -name "original.txt-*" -type f) ]]
 }
 
 @test "Directory collision with nested structure" {
@@ -138,7 +138,7 @@ teardown() {
     touch dir1/subdir/file3.txt
     run bash "$TRASH_TOOL_PATH/trash.sh" dir1
     [ -d "$TRASH_TOOL_PATH/trash_can/dir1" ]
-    [[ -n $(find "$TRASH_TOOL_PATH/trash_can" -name "*-dir1" -type d) ]]
+    [[ -n $(find "$TRASH_TOOL_PATH/trash_can" -name "dir1-*" -type d) ]]
 }
 
 @test "Nested directory recovery with collisions" {
@@ -160,7 +160,7 @@ teardown() {
     mkdir -p dir1/dir2/dir3
     run bash "$TRASH_TOOL_PATH/trash.sh" dir1
     [ -d "$TRASH_TOOL_PATH/trash_can/dir1" ]
-    [[ -n $(find "$TRASH_TOOL_PATH/trash_can" -name "*-dir1" -type d) ]]
+    [[ -n $(find "$TRASH_TOOL_PATH/trash_can" -name "dir1-*" -type d) ]]
 }
 
 @test "Handle special characters in filenames" {
