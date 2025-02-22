@@ -6,7 +6,7 @@ I came up with this idea when I was working on a highly restrictive Linux enviro
 ## Installation:
 Navigate to the desired installation path and run:
 ```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/main/installer.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)"
 ```
 This will create a new folder called `trash_tool` and it will add the following aliases `ts` and `trash`. If these are not recognized, manually source the displayed file.
 
