@@ -55,6 +55,7 @@ move_to_trash() {
 Path=$originalPath
 DeletionDate=$curDate
 EOF
+chmod 600 "$infoDir/$trashFileName.trashinfo"
 
     echo "Moved to trash: $trashFileName"
 }
