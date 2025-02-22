@@ -1,142 +1,146 @@
 # Trash Tool (CLI Utility)
-This tool is a Bash utility designed to manage files and directories by moving them to a designated "trash can" directory, allowing for recovery or permanent deletion at a later time. This utility mimics a recycle bin or trash functionality commonly found in graphical operating systems but is implemented for command-line environments. Below is a detailed high-level documentation of this tool, including its functionality and usage examples.
+This tool is a Bash utility designed to manage files and directories by moving them to a designated "trash" directory, allowing for later recovery or permanent deletion. It mimics the recycle bin/trash functionality commonly found in graphical operating systems—but implemented for the command line. The current version is fully compliant with the [FreeDesktop.org](https://specifications.freedesktop.org/trash-spec/latest/) trash specification.
 
-I came up with this idea when I was working on a highly restrictive Linux environment. It also works at the permission level you configure it to run at.
+I came up with this idea when I was working on a highly restrictive Linux environment.
 
-## Installation:
-Navigate to the desired installation path and run:
+## Installation
+To install the tool, run the following command from your desired installation path:
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)"
 ```
-This will create a new folder called `trash_tool` and it will add the following aliases `ts` and `trash`. If these are not recognized, manually source the displayed file.
+* This installer creates a new folder called `trash_tool` (if it doesn’t already exist) and downloads the refined `trash.sh` script.
+* It sets up the aliases `ts` and `trash` in your shell configuration file (e.g. ~/.bashrc or ~/.zshrc), so that you can easily run the tool.
+* Note: Running the installer multiple times will update the script without affecting previously trashed items. However, moving or renaming the installation folder will break the aliases.
 
-Running this installer more than once will not mess with your previously trashed files, but moving the installation folder or renaming it will cause the aliases to break.
+## Overview
 
-## Overview:
+### Freedesktop Compliance:
+The tool uses the environment variable XDG_DATA_HOME (defaulting to $HOME/.local/share) to locate the trash directory ($XDG_DATA_HOME/Trash). Inside, it maintains the required files and info subdirectories, and creates a corresponding .trashinfo file for each trashed item containing its original path and deletion date in ISO8601 format.
 
-The tool performs the following main functions:
+### Conditional Unique Naming:
+When a file or directory is trashed, the tool uses its original name unless a file with that name already exists in the trash. In case of a duplicate, a unique identifier is appended to ensure no naming collisions.
 
-* Initializes a trash directory and associated metadata files if they do not exist.
-* Provides commands to list, recover, and permanently delete files from the trash.
-* Supports scheduling automatic trash emptying using cron jobs.
-* Offers a help menu to guide users on how to use the tool.
-
-## Initialization:
-
-The script sets up a directory named trash_can in the same location as the script itself to store trashed files.
-It creates a trash.json file to keep track of the original file paths and the date they were trashed.
-
-## Key Functionalities:
-
-### Listing Files:
-
-`-l` or `--list`: Lists files in the trash can. Supports optional recursive listing and filtering by text or regex.
-
-**Example:** `ts -l` lists all files, `trash -l -R` lists all files recursively, and `trash -l -s some-folder filter` filters the recursively listed trash selected folder by text or regex.
-
-### Recovering Files:
-
-`-r` or `--recover`: Recovers specified files from the trash can.
-
-`-d` or `--dictionary`: Displays the dictionary of trashed files, optionally filtered by text or regex.
-
-**Example:** `ts -r file1` recovers file1, `trash -r -d` displays the dictionary for all trashed files.
+### Exact-Match Recovery with Collision Handling:
+To recover an item, you must provide the exact trashed name. If you supply a base name and multiple trashed items share that base name, the tool will list the ambiguous options so you can specify which one to recover. If the original location is occupied, it applies collision handling and generates a new target name.
 
 ### Emptying Trash:
-
-`-e` or `--empty`: Permanently deletes files from the trash can.
-
-`--confirm`: Empties the entire trash can.
-
-`--older [days]`: Deletes only files older than the specified number of days.
-
-**Example:** `ts -e file1` deletes file1, `trash -e --confirm` empties the entire trash can, `ts -e --older 30` deletes every file older than 30 days.
+The tool supports three deletion modes:
+* Entire Trash Deletion.
+* Selective Deletion by Age.
+* Individual Deletion.
 
 ### Cron Job Management:
+The tool provides options for scheduling automatic trash emptying using cron, features:
+* Can print the current cron job.
+* Can set up a cron job to empty the trash every N days.
+* Can limit deletion to items older than the specified number of days.
 
-`-c` or `--cron`: Manages automated trash emptying via cron.
-
-`-p` or `--print`: Displays the current cron job related to trash.
-
-`-t` or `--time [days]`: Sets up automatic emptying of trash every N days.
-
-`-o` or `--older [days]`: Deletes files older than N days when emptying.
-
-**Example:** `ts -c -t 7` sets up a cron job to empty trash every 7 days, `trash --cron --time 7 --older 30` sets up a cron job to empty trash every 7 days that is older than 30 days.
-
-### Help:
-
-`-h` or `--help`: Displays the help menu with usage instructions.
+## Usage Examples
+### Moving Items to Trash:
 ```
-Trash Tool v1.1
- 
-Usage: trash [OPTION] SOURCE
-Usage: ts [OPTION] SOURCE
- 
-Tool documentation: https://github.com/Maxsafer/trash-tool
- 
-Argument list:
--h, --help            Display this help menu.
--l, --list            List files inside the trash can.
-                      [Optional: Can include a text/regex filter]
-                          e.g.    trash -l [text/regex]
-   -R, --Recursive    Recursively list all items in the trash can.
-                      [Optional: Can include a text/regex filter]
-                          e.g.    trash -l -R [text/regex]
-   -s, --select       List a specific trashed file/folder recursively.
-                      [Optional: Can include a text/regex filter]
-                          e.g.    trash -l -s folder [text/regex]
- 
-[no argument]         Move file(s)/folder(s) to the trash.
-                          e.g.    trash file1 file2 ...
- 
--r, --recover         Recover file(s)/folder(s) from the trash.
-                          e.g.    trash -r file1 file2 ...
-   -d, --dictionary   Display the dictionary of trashed files.
-                      [Optional: Can include a text/regex filter]
-                          e.g.    trash -r -d [text/regex]
- 
--e, --empty           Permanently delete file(s)/folder(s) from the trash.
-                          e.g.    trash -e file1 file2 ...
-   --confirm          Empty the entire trash can.
-                          e.g.    trash -e --confirm
-   --older [days]     Delete only files older than the specified days.
-                          e.g.    trash -e --older 30
- 
--c, --cron            Manage automated trash emptying via cron.
-   -p, --print        Display the current cron job related to trash.
-                          e.g.    trash -c -p
-   -t, --time [days]  Set up automatic emptying of trash every N days.
-                          e.g.    trash -c -t 7
-   -o, --older [days] Only delete files older than N days when emptying.
-                          e.g.    trash -c -t 7 -o 30
+ts file1 file2
+```
+Moves the specified files or directories to trash.
+#
+### Listing Trashed Items:
+* #### List all items:
+```
+ts -l
+```
+* #### Recursively list all files in the trash:
+```
+ts -l -R
+```
+* #### Select and list a specific trashed folder recursively:
+```
+ts -l -s folderName
+```
+* #### List with a filter (by text or regex):
+```
+ts -l [any option] filterText
 ```
 
-## Usage Examples:
+### Recovering Items:
+To recover a trashed item, provide the exact trashed name (which might include a unique identifier if there was a duplicate).
+```
+ts -r hello.txt-<uniqueID>
+```
+If you supply only a base name and multiple trashed items share that base name, the tool will ask you to specify the exact name.
 
-To move a file to the trash: `trash file1` or `ts file1`
+### Emptying Trash:
+* #### Delete a specific trashed item:
+```
+ts -e hello.txt-<uniqueID>
+```
+* #### Delete all items older than 30 days:
+```
+ts -e --older 30
+```
+* #### Empty the entire trash:
+```
+ts -e --confirm
+```
 
-To list all files in the trash: `trash -l` or `ts -l`
+### Cron Job Management:
+* #### Display the current cron job for trash emptying:
+```
+ts -c -p
+```
+* #### Set up a cron job to empty the trash every 7 days:
+```
+ts -c -t 7
+```
+Note: This means that the cron job will execute on the 7th, 14th, 21th and 28th.
+* #### Set up a cron job to empty the trash every 7 days, but only delete items older than 30 days:
+```
+ts -c -t 7 -o 30
+```
 
-To recover a file: `trash --recover file1` or `ts -r file1`
+### Help Menu:
+```
+ts -h
+```
+Displays detailed usage instructions. Running `ts` or `trash` are equivalent, and running them alone will also display help.
+```
+Trash Tool (freedesktop compliant v1.1)
 
-To permanently delete a file from the trash: `trash --empty file1` or `ts -e file1`
+Usage: ts [OPTION] [FILE]
 
-To set up a cron job to empty trash every 30 days: `trash --cron --time 30`
+Options:
+  -h, --help           Show this help menu
+  -l, --list           List trashed files
+                        [Optional: -R/--Recursive for recursive listing]
+                        [Optional: -s/--select for specific folder selection]
+                        e.g.: ts -l, ts -l filter, ts -l -R, ts -l -R filter
 
-To display help: `trash -h`
+  [no argument]        Move file(s)/folder(s) to trash
+                        e.g.: ts file1 file2 ...
 
-## Error Handling:
+  -r, --recover        Recover file(s)/folder(s) from trash
+                        (Specify the exact trashed file name; if only the base name is given
+                         and multiple matches exist, the tool will print an ambiguous list.)
+                        e.g.: ts -r hello.txt   or   ts -r hello.txt-<uniqueID>
 
-* This tool checks for the existence of files and directories before attempting operations.
-* It provides feedback if a file does not exist or if an unknown argument is provided.
+  -e, --empty          Permanently delete file(s)/folder(s) from trash
+       --confirm        Empty entire trash (requires confirmation)
+       --older [days]   Delete only files older than the specified days
+       [file names]    Delete the specified trashed file(s) individually
 
-## Dependencies:
+  -c, --cron           Manage automated trash emptying via cron
+       -p, --print     Show current cron job
+       -t, --time [days]   Set automatic emptying every N days
+       -o, --older [days]  Only delete files older than N days when emptying
+```
 
-* It uses standard Unix utilities like ls, mv, rm, and crontab.
+## Error Handling
+* The tool checks for the existence of files or directories before attempting any operations.
+* It prints clear error messages if a file doesn’t exist, if the provided arguments are ambiguous, or if a date can’t be parsed.
+* OS-specific date parsing is implemented to work on both macOS and Linux without additional dependencies.
 
+## Dependencies
+* This tool uses standard Unix utilities such as ls, mv, rm, grep, and crontab.
+* It works on both macOS and Linux without extra dependencies.
 
 ## Future Development
-
-* As pointed out by some users, perhaps develop a branch compliant with [FreeDesktop.org](https://specifications.freedesktop.org/trash-spec/latest/) specification.
-* With the previous point in mind, perhaps treat this branch as a mobile installation for certain use cases.
+* Further refinements or additional features may be added in future releases.
+* As always, feedback is welcome to improve compatibility or add new functionalities.
