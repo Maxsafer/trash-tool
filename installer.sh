@@ -13,7 +13,7 @@ cd trash_tool || (echo "Failed to access trash_tool directory, please check perm
 toolDir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 
 # Download and set execute permissions for the refined trash.sh script.
-curl https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/main/trash.sh -o trash.sh
+curl https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/trash.sh -o trash.sh
 chmod 700 trash.sh
 
 # NOTE: The new refined version no longer uses trash_parser.sh, so we are not downloading it.
