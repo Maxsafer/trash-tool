@@ -13,11 +13,11 @@ setup() {
       elif [ -n "$BASH_VERSION" ]; then
           SHELL_CONFIG_FILE="$HOME/.bashrc"
       else
-          echo "Unsupported shell. Please add the alias manually."
+          echo "Unsupported shell."
           exit 1
       fi
   else
-      echo "Unsupported operating system. Please add the alias manually."
+      echo "Unsupported operating system."
       exit 1
   fi
 
