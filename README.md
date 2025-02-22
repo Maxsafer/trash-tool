@@ -1,35 +1,7 @@
 # Trash Tool (CLI Utility)
 This tool is a Bash utility designed to manage files and directories by moving them to a designated "trash can" directory, allowing for recovery or permanent deletion at a later time. This utility mimics a recycle bin or trash functionality commonly found in graphical operating systems but is implemented for command-line environments. Below is a detailed high-level documentation of this tool, including its functionality and usage examples.
 
-I came up with this idea when I was working on a highly restrictive Linux environment. It works at the permission level you configure it to run at, meaning it is a mobile trash can configured and installed per user, located at ~/userdefinedpath. Allowing use cases like:
-```
-someuser@something:~$ ts -r -d
-fileName trashDate filePath
------------------------------------------------------------------
-hellogithub.txt 2025-02-20_04-03-54 /home/someuser/hellogithub.txt
-
-someuser@something:~$ ts -l
-total 8.0K
--rw-r--r-- 1 someuser someuser 0 Feb 20 04:03 hellogithub.txt
-
-exit
-
-otheuser@something:~$ ts -r -d
-fileName trashDate filePath
------------------------------------------------------------------
-hellogithub.txt 2025-02-20_04-05-39 /home/otheuser/hellogithub.txt
-
-otheuser@something:~$ ts -l
-total 8.0K
--rw-r--r-- 1 otheuser otheuser 0 Feb 20 04:05 hellogithub.txt
-
-otheuser@something:~$ ts --cron --print
-0 0 1 */4 * /home/otheuser/trash_tool/trash.sh --empty --older 30
-
-otheuser@something:~$ sudo su someuser
-someuser@something:/home/otheuser$ ts --cron --print
-0 0 1 */2 * /home/someuser/trash_tool/trash.sh --empty --older 60
-```
+I came up with this idea when I was working on a highly restrictive Linux environment. It works at the permission level you configure it to run at, meaning it is a mobile trash can configured and installed per user, located at ~/userdefinedpath.
 
 ## Installation:
 Navigate to the desired installation path and run:
@@ -166,4 +138,4 @@ To display help: `trash -h`
 
 ## Future Development
 
-* Develop a branch compliant with [FreeDesktop.org](https://specifications.freedesktop.org/trash-spec/latest/) specification.
+* Developed a [branch](https://github.com/Maxsafer/trash-tool/tree/freedtspec) compliant with [FreeDesktop.org](https://specifications.freedesktop.org/trash-spec/latest/) specification.
