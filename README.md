@@ -3,8 +3,8 @@ This tool is a Bash utility designed to manage files and directories by moving t
 
 I came up with this idea when I was working on a highly restrictive Linux environment.
 
-## Installation
-To install the tool, run the following command from your desired installation path:
+## Installation / Update
+To install/update the tool, run the following command from your desired/previous installation path:
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)"
 ```
