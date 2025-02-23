@@ -4,13 +4,13 @@ This tool is a Bash utility designed to manage files and directories by moving t
 I came up with this idea when I was working on a highly restrictive Linux environment.
 
 ## Installation / Update
-To install/update the tool, run the following command from your desired/previous installation path:
+To install/update the tool, run the following command:
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)"
 ```
-* This installer creates a new folder called `trash_tool` (if it doesn’t already exist) and downloads the refined `trash.sh` script.
-* It sets up the aliases `ts` and `trash` in your shell configuration file (e.g. ~/.bashrc or ~/.zshrc), so that you can easily run the tool.
-* Note: Running the installer multiple times will update the script without affecting previously trashed items. However, moving or renaming the installation folder will break the aliases.
+* This installer creates a new folder called `trash_tool` (if it doesn’t already exist) and downloads `trash.sh` script.
+* It sets up symlinks `ts` and `trash`, so that you can easily run the tool.
+* Note: Running the installer multiple times will update the script without affecting previously trashed items. However, moving or renaming the installation folder will break the tool.
 
 ## Overview
 
