@@ -357,7 +357,7 @@ case "$1" in
                    crontab -l 2>/dev/null | grep -v 'trash' | crontab -
                    echo "Removed trash from crontab."
               else
-                   cronCommand="$(generate_cron_expression "$days") $0 --empty $confirmFlag"
+                   cronCommand="$(generate_cron_expression "$days") trash --empty $confirmFlag"
                    currentCron=$(crontab -l 2>/dev/null | grep 'trash')
                    if [ -z "$currentCron" ]; then
                         (crontab -l 2>/dev/null; echo "$cronCommand") | crontab -
