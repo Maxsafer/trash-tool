@@ -46,16 +46,16 @@ move_to_trash() {
          uuid=$(date +%s%N | sha256sum | cut -c1-12)
          trashFileName="${fileName}-${uuid}"
     fi
-
-    mv "$filePath" "$filesDir/$trashFileName" || { echo "Error: Could not move $filePath"; exit 1; }
-
+    
     # Create the .trashinfo metadata file (per freedesktop spec)
-    cat > "$infoDir/$trashFileName.trashinfo" <<EOF
+    tempInfo="$(mktemp)"
+cat > "$tempInfo" <<EOF
 [Trash Info]
 Path=$originalPath
 DeletionDate=$curDate
 EOF
-
+    chmod 600 "$tempInfo"
+    mv "$tempInfo" "$infoDir/$trashFileName.trashinfo"; mv "$filePath" "$filesDir/$trashFileName" || { echo "Error: Could not move $filePath"; exit 1; }
     echo "Moved to trash: $trashFileName"
 }
 
