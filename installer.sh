@@ -8,11 +8,20 @@ SCRIPT_NAME="trash.sh"
 # Ensure ~/.local/bin exists
 mkdir -p "$BIN_DIR"
 
-# Ensure ~/.local/bin is in PATH
+# Determine which profile file to update for bash users
+if [ -f "$HOME/.bash_profile" ]; then
+    PROFILE_FILE="$HOME/.bash_profile"  # Fedora, RHEL, CentOS, some distros
+elif [ -f "$HOME/.profile" ]; then
+    PROFILE_FILE="$HOME/.profile"  # Debian, Ubuntu, default fallback
+else
+    PROFILE_FILE="$HOME/.profile"  # If neither exists, create this one
+fi
+
+# Ensure ~/.local/bin is in PATH for all shells
 if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.profile"  # Works for most shells
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"   # Bash shells
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.zshrc"    # macOS default shell
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$PROFILE_FILE"  # For login shells
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"   # Bash interactive shells
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.zshrc"    # macOS zsh users
     export PATH="$HOME/.local/bin:$PATH"  # Apply immediately
 fi
 
