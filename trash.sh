@@ -46,22 +46,30 @@ move_to_trash() {
          uuid=$(date +%s%N | sha256sum | cut -c1-12)
          trashFileName="${fileName}-${uuid}"
     fi
-    
+
+    mv "$filePath" "$filesDir/$trashFileName" || { echo "Error: Could not move $filePath"; exit 1; }
+
     # Create the .trashinfo metadata file (per freedesktop spec)
-    tempInfo="$(mktemp)"
-cat > "$tempInfo" <<EOF
+    cat > "$infoDir/$trashFileName.trashinfo" <<EOF
 [Trash Info]
 Path=$originalPath
 DeletionDate=$curDate
 EOF
-    chmod 600 "$tempInfo"
-    mv "$tempInfo" "$infoDir/$trashFileName.trashinfo"; mv "$filePath" "$filesDir/$trashFileName" || { echo "Error: Could not move $filePath"; exit 1; }
+
     echo "Moved to trash: $trashFileName"
 }
 
 # List trashed files by reading the .trashinfo files.
 list_trash() {
-    echo -e "${BOLD}${BLUE}Trashed Files:${NC}"
+    local infoDir="$HOME/.local/share/Trash/info"  # Ensure this is set correctly
+
+    # Define a proper delimiter for easy parsing
+    local delimiter=$'\t'  # Tab-delimited output
+    local longestKey=10  # Default width for filename
+    local longestDate=15  # Default width for date
+    local longestPath=10  # Default width for path
+
+    # First pass: Determine max column widths
     for infoFile in "$infoDir"/*.trashinfo; do
         if [[ -f "$infoFile" ]]; then
             local key
@@ -70,7 +78,35 @@ list_trash() {
             deletionDate=$(grep '^DeletionDate=' "$infoFile" | cut -d'=' -f2-)
             local originalPath
             originalPath=$(grep '^Path=' "$infoFile" | cut -d'=' -f2-)
-            printf "${GREEN}%-40s${WHITE} %-25s %s${NC}\n" "$key" "$deletionDate" "$originalPath"
+
+            # Update column widths based on actual content
+            (( ${#key} > longestKey )) && longestKey=${#key}
+            (( ${#deletionDate} > longestDate )) && longestDate=${#deletionDate}
+            (( ${#originalPath} > longestPath )) && longestPath=${#originalPath}
+        fi
+    done
+
+    # Header
+    printf "${BOLD}${BLUE}%-*s${delimiter}%-*s${delimiter}%s${NC}\n" \
+        "$longestKey" "Trashed-Files" \
+        "$longestDate" "Trashed-Date" \
+        "Original-Path"
+
+    # Second pass: Print the actual data
+    for infoFile in "$infoDir"/*.trashinfo; do
+        if [[ -f "$infoFile" ]]; then
+            local key
+            key=$(basename -- "$infoFile" .trashinfo)
+            local deletionDate
+            deletionDate=$(grep '^DeletionDate=' "$infoFile" | cut -d'=' -f2-)
+            local originalPath
+            originalPath=$(grep '^Path=' "$infoFile" | cut -d'=' -f2-)
+
+            # Print tab-separated output
+            printf "${GREEN}%-*s${delimiter}${WHITE}%-*s${delimiter}%s${NC}\n" \
+                "$longestKey" "$key" \
+                "$longestDate" "$deletionDate" \
+                "$originalPath"
         fi
     done
 }
@@ -266,6 +302,7 @@ case "$1" in
              fi
          elif [ $# -eq 4 ]; then
              if [ "$2" == "-s" ] || [ "$2" == "--select" ]; then
+                 local key
                  key=$(ls "$infoDir"/*"${3}"*.trashinfo 2>/dev/null | head -n1)
                  if [ -z "$key" ]; then
                     echo "No trashed folder matching: $3"
