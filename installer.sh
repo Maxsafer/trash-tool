@@ -1,50 +1,48 @@
 #!/bin/bash
 
-# Create directory with user-only permissions
-if [ ! -d "trash_tool" ]; then
-    mkdir -m 700 trash_tool || (echo "Failed to create directory, please check permissions." && exit 1)
-elif [ -d "trash_tool" ]; then
-    echo "'trash_tool' already exists, updating trash.sh only."
+# Define installation paths
+INSTALL_DIR="$HOME/trash_tool"
+BIN_DIR="$HOME/.local/bin"  # User-specific bin directory
+SCRIPT_NAME="trash.sh"
+
+# Ensure ~/.local/bin exists
+mkdir -p "$BIN_DIR"
+
+# Ensure ~/.local/bin is in PATH
+if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.profile"  # Works for most shells
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"   # Bash shells
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.zshrc"    # macOS default shell
+    export PATH="$HOME/.local/bin:$PATH"  # Apply immediately
+fi
+
+# Create the trash_tool directory with secure permissions
+if [ ! -d "$INSTALL_DIR" ]; then
+    mkdir -m 700 "$INSTALL_DIR" || { echo "Failed to create directory, please check permissions."; exit 1; }
+    echo "Created directory: $INSTALL_DIR"
+elif [ -d "$INSTALL_DIR" ]; then
+    echo "'$INSTALL_DIR' already exists, updating $SCRIPT_NAME only."
 else
     echo "Unexpected directory error, please check permissions." && exit 1
 fi
 
-cd trash_tool || (echo "Failed to access trash_tool directory, please check permissions." && exit 1)
-toolDir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+cd "$INSTALL_DIR" || { echo "Failed to access $INSTALL_DIR, please check permissions."; exit 1; }
 
-# Download and set execute permissions for the refined trash.sh script.
-curl https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/trash.sh -o trash.sh
-chmod 700 trash.sh
+# Download the latest trash.sh script
+curl -sS https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/trash.sh -o "$SCRIPT_NAME"
+chmod 700 "$SCRIPT_NAME"
 
-# NOTE: The new refined version no longer uses trash_parser.sh, so we are not downloading it.
+# Create symbolic links in ~/.local/bin
+ln -sf "$INSTALL_DIR/$SCRIPT_NAME" "$BIN_DIR/trash"
+ln -sf "$INSTALL_DIR/$SCRIPT_NAME" "$BIN_DIR/ts"
 
-# Detect the operating system
-OS="$(uname)"
+# Ensure symbolic links are executable
+chmod +x "$BIN_DIR/trash" "$BIN_DIR/ts"
 
-# Determine the shell configuration file based on the OS and shell being used.
-if [ "$OS" = "Darwin" ]; then
-    # macOS typically uses zsh by default.
-    SHELL_CONFIG_FILE="$HOME/.zshrc"
-elif [ "$OS" = "Linux" ]; then
-    # Check which shell is being used.
-    if [ -n "$ZSH_VERSION" ]; then
-        SHELL_CONFIG_FILE="$HOME/.zshrc"
-    elif [ -n "$BASH_VERSION" ]; then
-        SHELL_CONFIG_FILE="$HOME/.bashrc"
-    else
-        echo "Unsupported shell. Please add the alias manually."
-        exit 1
-    fi
+# Verify installation
+if command -v trash >/dev/null && command -v ts >/dev/null; then
+    echo "Installation successful! You can now use 'trash' or 'ts'."
 else
-    echo "Unsupported operating system. Please add the alias manually."
-    exit 1
-fi
-
-# Append the alias to the determined shell configuration file if not already present.
-if ! grep -q "alias trash=" "$SHELL_CONFIG_FILE"; then
-    echo "alias trash='$toolDir/trash.sh'" >> "$SHELL_CONFIG_FILE"
-    echo "alias ts='$toolDir/trash.sh'" >> "$SHELL_CONFIG_FILE"
-    echo "Alias 'trash' and 'ts' added to $SHELL_CONFIG_FILE. Please run 'source $SHELL_CONFIG_FILE' to start using trash."
-else
-    echo "Trash alias already exists in $SHELL_CONFIG_FILE"
+    echo "Installation completed, but symbolic links may not be recognized immediately."
+    echo "Try running: source ~/.bashrc or restarting your terminal."
 fi
