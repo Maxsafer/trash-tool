@@ -141,6 +141,12 @@ Options:
 * This tool uses standard Unix utilities such as ls, mv, rm, grep, and crontab.
 * It works on both macOS and Linux without extra dependencies.
 
+## Acknowledgements Section
+* r/Linux - Users that pointed me on the right direction.
+* [https://crontab.guru/](https://crontab.guru/) - Visual aid to confirm crons.
+* [https://bellard.org/jslinux/?ref=itsfoss.com](https://bellard.org/jslinux/) - Different environtments for testing.
+* [https://www.onworks.net/](https://www.onworks.net/) - Different environtments for testing.
+
 ## Future Development
 * Further refinements or additional features may be added in future releases.
 * As always, feedback is welcome to improve compatibility or add new functionalities.
