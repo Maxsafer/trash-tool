@@ -1,5 +1,5 @@
 # Trash Tool (CLI Utility)
-This tool is a Bash utility designed to manage files and directories by moving them to a designated "trash" directory, allowing for later recovery or permanent deletion. It mimics the recycle bin/trash functionality commonly found in graphical operating systems—but implemented for the command line. The current version is fully compliant with the [FreeDesktop.org](https://specifications.freedesktop.org/trash-spec/latest/) trash specification.
+This tool is an ash and dash utility designed to manage files and directories by moving them to a designated "trash" directory, allowing for later recovery or permanent deletion. It mimics the recycle bin/trash functionality commonly found in graphical operating systems—but implemented for the command line. The current version is fully compliant with the [FreeDesktop.org](https://specifications.freedesktop.org/trash-spec/latest/) trash specification.
 
 I came up with this idea when I was working on a highly restrictive Linux environment.
 
