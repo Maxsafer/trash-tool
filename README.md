@@ -6,7 +6,7 @@ I came up with this idea when I was working on a highly restrictive Linux enviro
 ## Installation / Update
 To install/update the tool, run the following command:
 ```
-/bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)"
+/bin/ash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)"
 ```
 * This installer creates a new folder called `trash_tool` (if it doesn’t already exist) and downloads `trash.sh` script.
 * It sets up symlinks `ts` and `trash`, so that you can easily run the tool.
