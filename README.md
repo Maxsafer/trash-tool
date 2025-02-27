@@ -150,24 +150,13 @@ Options:
 
 ```
 docker run --rm -it ubuntu bash -c "apt update && apt install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
-```
-```
 docker run --rm -it debian bash -c "apt update && apt install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
-```
-```
 docker run --rm -it alpine ash -c "apk add --no-cache curl && ash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)\" && ash"
-```
-```
-docker run --rm -it rockylinux:8 bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
-```
-```
-docker run --rm -it almalinux:8 bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
-```
-```
-docker run --rm -it fedora bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
-```
-```
+docker run --rm -it debian sh -c "apt-get update && apt-get install -y curl && /bin/sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)\" && /bin/sh"
 docker run --rm -it alpine sh -c "apk add --no-cache fish curl && /bin/sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)\" && fish"
+docker run --rm -it rockylinux:8 bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
+docker run --rm -it almalinux:8 bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
+docker run --rm -it fedora bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
 ```
 
 ## Future Development
