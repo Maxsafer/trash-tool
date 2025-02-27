@@ -1,5 +1,5 @@
-#!/bin/bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 
 # Enable non-interactive mode if passed as an argument
 NONINTERACTIVE=0
@@ -15,7 +15,7 @@ done
 # This installer may prompt the user if conflicts are detected (e.g. an existing symlink).
 # To run in non-interactive mode (suppressing prompts), include the -y or --yes flag.
 # Example (non-interactive):
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)" -y
+#   /bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)" -y
 
 # Define installation paths
 INSTALL_DIR="$HOME/trash_tool"
@@ -23,16 +23,12 @@ BIN_DIR="$HOME/.local/bin"  # User-specific bin directory
 SCRIPT_NAME="trash.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/trash.sh"
 
-# Function to append a line to a file if an export for BIN_DIR is not already present,
-# using regex for a more robust check.
+# Function to append a line to a file if an export for BIN_DIR is not already present.
 append_if_not_exists() {
-    local file="$1"
-    local line="$2"
+    file="$1"
+    line="$2"
     if [ -f "$file" ]; then
-        # Escape potential regex special characters in BIN_DIR
-        local escaped_bin
         escaped_bin=$(printf '%s\n' "$BIN_DIR" | sed 's/[][\/.^$*]/\\&/g')
-        # Look for an uncommented export PATH line that contains BIN_DIR, with flexible spacing.
         if grep -E -q '^[[:space:]]*[^#]*export[[:space:]]+PATH=.*'"$escaped_bin" "$file"; then
             echo "A PATH entry for $BIN_DIR already exists in $file."
         else
@@ -46,9 +42,9 @@ append_if_not_exists() {
 }
 
 # Check for a download tool: prefer curl but fallback to wget if needed
-if command -v curl >/dev/null; then
+if command -v curl >/dev/null 2>&1; then
     DOWNLOADER="curl"
-elif command -v wget >/dev/null; then
+elif command -v wget >/dev/null 2>&1; then
     DOWNLOADER="wget"
 else
     echo "Error: Neither curl nor wget is installed. Please install one of them." >&2
@@ -58,7 +54,7 @@ fi
 # Ensure ~/.local/bin exists
 mkdir -p "$BIN_DIR"
 
-# Determine which profile file to update for bash users
+# Determine which profile file to update for login shells
 if [ -f "$HOME/.bash_profile" ]; then
     PROFILE_FILE="$HOME/.bash_profile"
 elif [ -f "$HOME/.profile" ]; then
@@ -68,21 +64,25 @@ else
 fi
 
 # Update PATH for various shells if BIN_DIR is not already in PATH
-if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
-    PATH_EXPORT='export PATH="$HOME/.local/bin:$PATH"'
-    append_if_not_exists "$PROFILE_FILE" "$PATH_EXPORT"
-    append_if_not_exists "$HOME/.bashrc" "$PATH_EXPORT"
-    append_if_not_exists "$HOME/.zshrc" "$PATH_EXPORT"
+case ":$PATH:" in
+    *":$BIN_DIR:"*)
+        ;;
+    *)
+        PATH_EXPORT='export PATH="$HOME/.local/bin:$PATH"'
+        append_if_not_exists "$PROFILE_FILE" "$PATH_EXPORT"
+        append_if_not_exists "$HOME/.bashrc" "$PATH_EXPORT"
+        append_if_not_exists "$HOME/.zshrc" "$PATH_EXPORT"
 
-    # For Fish shell configuration
-    FISH_CONFIG="$HOME/.config/fish/config.fish"
-    mkdir -p "$(dirname "$FISH_CONFIG")"
-    FISH_PATH_EXPORT='set -gx PATH "$HOME/.local/bin" $PATH'
-    append_if_not_exists "$FISH_CONFIG" "$FISH_PATH_EXPORT"
+        # For Fish shell configuration
+        FISH_CONFIG="$HOME/.config/fish/config.fish"
+        mkdir -p "$(dirname "$FISH_CONFIG")"
+        FISH_PATH_EXPORT='set -gx PATH "$HOME/.local/bin" $PATH'
+        append_if_not_exists "$FISH_CONFIG" "$FISH_PATH_EXPORT"
 
-    # Apply immediately for current session
-    export PATH="$HOME/.local/bin:$PATH"
-fi
+        # Apply immediately for current session
+        export PATH="$HOME/.local/bin:$PATH"
+        ;;
+esac
 
 # Check if INSTALL_DIR exists but is not a directory
 if [ -e "$INSTALL_DIR" ] && [ ! -d "$INSTALL_DIR" ]; then
@@ -100,7 +100,7 @@ fi
 
 cd "$INSTALL_DIR" || { echo "Failed to access $INSTALL_DIR; please check permissions." >&2; exit 1; }
 
-# Download the latest trash.sh script with verification that the file is not empty.
+# Download the latest trash.sh script and verify that the file is not empty.
 if [ "$DOWNLOADER" = "curl" ]; then
     if ! curl -sS "$SCRIPT_URL" -o "$SCRIPT_NAME"; then
         echo "Download failed. Please check your network connection." >&2
@@ -113,23 +113,19 @@ elif [ "$DOWNLOADER" = "wget" ]; then
     fi
 fi
 
-# Ensure the downloaded script is not empty
 if [ ! -s "$SCRIPT_NAME" ]; then
     echo "Downloaded script is empty. Exiting." >&2
     exit 1
 fi
 
-# Set secure permissions on the script
 chmod 700 "$SCRIPT_NAME"
 
 # Function to create (or update) a symlink, verifying if it already exists in BIN_DIR.
 create_symlink() {
-    local link_name="$1"
-    local target="$2"
+    link_name="$1"
+    target="$2"
     
     if [ -L "$link_name" ]; then
-        # If it's a symlink, check its target.
-        local current_target
         current_target=$(readlink "$link_name")
         if [ "$current_target" = "$target" ]; then
             echo "Symlink $(basename "$link_name") already exists and points to the correct target."
@@ -139,13 +135,17 @@ create_symlink() {
                 ln -sf "$target" "$link_name"
                 echo "Symlink $(basename "$link_name") overwritten automatically."
             else
-                read -p "Symlink $(basename "$link_name") exists and points to $current_target. Overwrite with $target? [y/N]: " answer
-                if [[ "$answer" =~ ^[Yy]$ ]]; then
-                    ln -sf "$target" "$link_name"
-                    echo "Symlink $(basename "$link_name") overwritten."
-                else
-                    echo "Skipping creation of symlink $(basename "$link_name")."
-                fi
+                echo -n "Symlink $(basename "$link_name") exists and points to $current_target. Overwrite with $target? [y/N]: "
+                read answer
+                case "$answer" in
+                    [Yy])
+                        ln -sf "$target" "$link_name"
+                        echo "Symlink $(basename "$link_name") overwritten."
+                        ;;
+                    *)
+                        echo "Skipping creation of symlink $(basename "$link_name")."
+                        ;;
+                esac
             fi
         fi
     elif [ -e "$link_name" ]; then
@@ -162,9 +162,10 @@ create_symlink "$BIN_DIR/trash" "$INSTALL_DIR/$SCRIPT_NAME"
 create_symlink "$BIN_DIR/ts" "$INSTALL_DIR/$SCRIPT_NAME"
 
 # Verify installation
-if command -v trash >/dev/null && command -v ts >/dev/null; then
+if command -v trash >/dev/null 2>&1 && command -v ts >/dev/null 2>&1; then
     echo "Installation successful! You can now use 'trash' or 'ts'."
+    echo "Try running: . ~/.bashrc or restarting your terminal."
 else
     echo "Installation completed, but symbolic links may not be recognized immediately."
-    echo "Try running: source ~/.bashrc or restarting your terminal."
+    echo "Try running: . ~/.bashrc or restarting your terminal."
 fi
