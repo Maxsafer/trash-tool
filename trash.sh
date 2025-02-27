@@ -302,7 +302,6 @@ case "$1" in
              fi
          elif [ $# -eq 4 ]; then
              if [ "$2" == "-s" ] || [ "$2" == "--select" ]; then
-                 local key
                  key=$(ls "$infoDir"/*"${3}"*.trashinfo 2>/dev/null | head -n1)
                  if [ -z "$key" ]; then
                     echo "No trashed folder matching: $3"
