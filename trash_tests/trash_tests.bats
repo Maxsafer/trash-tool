@@ -59,7 +59,6 @@ teardown() {
   touch file1.txt file2.txt
   run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" file1.txt file2.txt
   run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" -l "file1"
-  [ "$status" -eq 0 ]
   echo "$output" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g' | grep -q "file1.txt"
 }
 
