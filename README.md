@@ -146,6 +146,11 @@ Options:
 * [https://crontab.guru](https://crontab.guru) - Visual aid to confirm crons.
 * [https://bellard.org/jslinux](https://bellard.org/jslinux) - Different environtments for testing.
 * [https://www.onworks.net](https://www.onworks.net) - Different environtments for testing.
+* Docker - Allowed testing on light containers.
+
+```
+docker run --rm -it alpine ash -c "apk add --no-cache curl && ash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)\" && ash"
+```
 
 ## Future Development
 * Further refinements or additional features may be added in future releases.
