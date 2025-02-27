@@ -21,7 +21,7 @@ done
 INSTALL_DIR="$HOME/trash_tool"
 BIN_DIR="$HOME/.local/bin"  # User-specific bin directory
 SCRIPT_NAME="trash.sh"
-SCRIPT_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/trash.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/trash.sh"
 
 # Function to append a line to a file if an export for BIN_DIR is not already present.
 append_if_not_exists() {
