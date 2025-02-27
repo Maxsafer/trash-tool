@@ -166,6 +166,9 @@ docker run --rm -it almalinux:8 bash -c "dnf install -y curl && bash -c \"\$(cur
 ```
 docker run --rm -it fedora bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
 ```
+```
+docker run --rm -it alpine sh -c "apk add --no-cache fish curl && /bin/sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)\" && fish"
+```
 
 ## Future Development
 * Further refinements or additional features may be added in future releases.
