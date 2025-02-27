@@ -146,6 +146,26 @@ Options:
 * [https://crontab.guru](https://crontab.guru) - Visual aid to confirm crons.
 * [https://bellard.org/jslinux](https://bellard.org/jslinux) - Different environtments for testing.
 * [https://www.onworks.net](https://www.onworks.net) - Different environtments for testing.
+* Docker - Allowed testing on light containers.
+
+```
+docker run --rm -it ubuntu bash -c "apt update && apt install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
+```
+```
+docker run --rm -it debian bash -c "apt update && apt install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
+```
+```
+docker run --rm -it alpine ash -c "apk add --no-cache curl && ash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)\" && ash"
+```
+```
+docker run --rm -it rockylinux:8 bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
+```
+```
+docker run --rm -it almalinux:8 bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
+```
+```
+docker run --rm -it fedora bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
+```
 
 ## Future Development
 * Further refinements or additional features may be added in future releases.
