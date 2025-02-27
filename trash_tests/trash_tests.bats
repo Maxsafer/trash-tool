@@ -57,13 +57,20 @@ teardown() {
 
 @test "List with regex filter" {
   touch file1.txt file2.txt
-  # Move both files to trash.
+  # Trash both files.
   run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" file1.txt file2.txt
-  # Now list with a filter for "file1"
+  
+  # List with a filter for "file1".
   run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" -l "file1"
-  # Strip ANSI escape sequences from the output.
-  output_clean=$(echo "$output" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g')
-  echo "$output_clean" | grep -q "file1"
+  
+  # Remove ANSI escape sequences.
+  clean_output=$(echo "$output" | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g')
+  
+  # Skip the header line and extract the first field from the remaining lines.
+  trashed_name=$(echo "$clean_output" | tail -n +2 | awk '{print $1}')
+  
+  # Check that the filtered output contains "file1.txt"
+  [ "$trashed_name" = "file1.txt" ]
 }
 
 @test "Recursive listing" {
