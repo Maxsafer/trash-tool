@@ -151,6 +151,9 @@ Options:
 ```
 docker run --rm -it alpine ash -c "apk add --no-cache curl && ash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)\" && ash"
 ```
+```
+docker run --rm -it debian sh -c "apt-get update && apt-get install -y curl && /bin/sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)\" && /bin/sh"
+```
 
 ## Future Development
 * Further refinements or additional features may be added in future releases.
