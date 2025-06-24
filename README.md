@@ -6,10 +6,10 @@ I came up with this idea when I was working on a highly restrictive Linux enviro
 ## Installation / Update
 To install/update the tool, run the following command:
 ```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/mac/installer.sh)"
 ```
 * This installer creates a new folder called `trash_tool` (if it doesn’t already exist) and downloads `trash.sh` script.
-* It sets up symlinks `ts` and `trash`, so that you can easily run the tool.
+* It sets up symlinks `ts`, so that you can easily run the tool.
 * Note: Running the installer multiple times will update the script without affecting previously trashed items. However, moving or renaming the installation folder will break the tool.
 
 ## Overview
@@ -100,7 +100,7 @@ ts -c -t 7 -o 30
 ```
 ts -h
 ```
-Displays detailed usage instructions. Running `ts` or `trash` are equivalent, and running them alone will also display help.
+Displays detailed usage instructions.
 ```
 Trash Tool (freedesktop compliant v1.1)
 
