@@ -345,7 +345,7 @@ case "$1" in
          ;;
     "-c" | "--cron")
          if [ $# -eq 2 ] && { [ "$2" == "-p" ] || [ "$2" == "--print" ]; }; then
-              echo "$(crontab -l 2>/dev/null | grep 'trash')"
+              echo "$(crontab -l 2>/dev/null | grep 'ts')"
          elif { [ $# -eq 3 ] || [ $# -eq 5 ]; } && { [ "$2" == "-t" ] || [ "$2" == "--time" ]; }; then
               days=$3
               confirmFlag="--confirm"
@@ -353,17 +353,17 @@ case "$1" in
                     confirmFlag="--older $5"
               fi
               if [ "$days" -eq 0 ]; then
-                   crontab -l 2>/dev/null | grep -v 'trash' | crontab -
+                   crontab -l 2>/dev/null | grep -v 'ts' | crontab -
                    echo "Removed trash from crontab."
               else
-                   cronCommand="$(generate_cron_expression "$days") "$(command -v trash)" --empty $confirmFlag"
-                   currentCron=$(crontab -l 2>/dev/null | grep 'trash')
+                   cronCommand="$(generate_cron_expression "$days") "$(command -v ts)" --empty $confirmFlag"
+                   currentCron=$(crontab -l 2>/dev/null | grep 'ts')
                    if [ -z "$currentCron" ]; then
                         (crontab -l 2>/dev/null; echo "$cronCommand") | crontab -
-                        echo "$(crontab -l 2>/dev/null | grep 'trash')"
+                        echo "$(crontab -l 2>/dev/null | grep 'ts')"
                    elif [[ "$currentCron" != *"$cronCommand"* ]]; then
-                        (crontab -l | grep -v 'trash'; echo "$cronCommand") | crontab -
-                        echo "$(crontab -l 2>/dev/null | grep 'trash')"
+                        (crontab -l | grep -v 'ts'; echo "$cronCommand") | crontab -
+                        echo "$(crontab -l 2>/dev/null | grep 'ts')"
                    fi
               fi
          else
