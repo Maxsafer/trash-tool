@@ -15,13 +15,13 @@ done
 # This installer may prompt the user if conflicts are detected (e.g. an existing symlink).
 # To run in non-interactive mode (suppressing prompts), include the -y or --yes flag.
 # Example (non-interactive):
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)" -y
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/mac/installer.sh)" -y
 
 # Define installation paths
 INSTALL_DIR="$HOME/trash_tool"
 BIN_DIR="$HOME/.local/bin"  # User-specific bin directory
 SCRIPT_NAME="trash.sh"
-SCRIPT_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/trash.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/mac/trash.sh"
 
 # Function to append a line to a file if an export for BIN_DIR is not already present,
 # using regex for a more robust check.
@@ -157,13 +157,12 @@ create_symlink() {
     fi
 }
 
-# Create symbolic links in ~/.local/bin for 'trash' and 'ts'
-create_symlink "$BIN_DIR/trash" "$INSTALL_DIR/$SCRIPT_NAME"
+# Create symbolic links in ~/.local/bin for 'ts'
 create_symlink "$BIN_DIR/ts" "$INSTALL_DIR/$SCRIPT_NAME"
 
 # Verify installation
-if command -v trash >/dev/null && command -v ts >/dev/null; then
-    echo "Installation successful! You can now use 'trash' or 'ts'."
+if command -v ts >/dev/null && command -v ts >/dev/null; then
+    echo "Installation successful! You can now use 'ts'."
 else
     echo "Installation completed, but symbolic links may not be recognized immediately."
     echo "Try running: source ~/.bashrc or restarting your terminal."
