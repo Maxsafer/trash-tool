@@ -24,6 +24,18 @@ infoDir="$trashDir/info"
 mkdir -p "$filesDir" "$infoDir"
 chmod 700 "$filesDir" "$infoDir"
 
+# Script base folder
+get_script_path() {
+  SOURCE="$0"
+  while [ -L "$SOURCE" ]; do
+    DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    # If the symlink is relative, prepend the directory
+    [ "${SOURCE#/}" = "$SOURCE" ] && SOURCE="$DIR/$SOURCE"
+  done
+  cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd
+}
+
 #########################
 # Trash Action Functions#
 #########################
@@ -356,7 +368,7 @@ case "$1" in
                    crontab -l 2>/dev/null | grep -v 'ts' | crontab -
                    echo "Removed trash from crontab."
               else
-                   cronCommand="$(generate_cron_expression "$days") "$(command -v ts)" --empty $confirmFlag"
+                   cronCommand="$(generate_cron_expression "$days") "$(command -v ts)" --empty $confirmFlag >> "$(get_script_path)/cron.log" 2>&1"
                    currentCron=$(crontab -l 2>/dev/null | grep 'ts')
                    if [ -z "$currentCron" ]; then
                         (crontab -l 2>/dev/null; echo "$cronCommand") | crontab -
