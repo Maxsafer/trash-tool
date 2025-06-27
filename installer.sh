@@ -188,6 +188,7 @@ cron_enable_start() {
         echo "Manually run the cron check to ensure cron trash deletion works:"
         echo "sudo launchctl enable system/$SERVICE"
         echo "sudo launchctl start system/$SERVICE"
+    fi
   fi
 }
 
