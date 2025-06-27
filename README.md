@@ -1,4 +1,8 @@
-# Trash Tool (CLI Utility)
+# Trash Tool (CLI Utility) - Legacy
+This version is deprecated. Refer to other branches or releases for maintained versions.
+- [Releases](https://github.com/Maxsafer/trash-tool/releases)
+- [Other Branches](https://github.com/Maxsafer/trash-tool/branches/all)
+
 This tool is a Bash utility designed to manage files and directories by moving them to a designated "trash can" directory, allowing for recovery or permanent deletion at a later time. This utility mimics a recycle bin or trash functionality commonly found in graphical operating systems but is implemented for command-line environments. Below is a detailed high-level documentation of this tool, including its functionality and usage examples.
 
 I came up with this idea when I was working on a highly restrictive Linux environment. It works at the permission level you configure it to run at, meaning it is a mobile trash can configured and installed per user, located at ~/userdefinedpath.
