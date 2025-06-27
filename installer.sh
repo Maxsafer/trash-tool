@@ -164,24 +164,30 @@ cron_enable_start() {
   if [ "$NONINTERACTIVE" -eq 1 ]; then
     echo "Skipping cron config check..."
   else
-    # Enable if disabled
-    if sudo launchctl print-disabled system 2>/dev/null | grep -q "\"com.vix.cron\" => \(true\|disabled\)"; then
-      echo "→ Enabling $SERVICE"
-      sudo launchctl enable system/$SERVICE 
-      echo "✓ $SERVICE enabled"
-      
+    read -p "Start automatic cron service check with sudo? (can be manually done) [y/N]: " answer
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        # Enable if disabled
+        if sudo launchctl print-disabled system 2>/dev/null | grep -q "\"com.vix.cron\" => \(true\|disabled\)"; then
+          echo "→ Enabling $SERVICE"
+          sudo launchctl enable system/$SERVICE 
+          echo "✓ $SERVICE enabled"
+          
+        else
+          echo "✓ $SERVICE already enabled"
+        fi
+    
+        # Start if not running
+        if ! sudo launchctl list | grep -q "$SERVICE"; then
+          echo "→ Starting $SERVICE"
+          sudo launchctl start system/$SERVICE
+          echo "✓ $SERVICE running"
+        else
+          echo "✓ $SERVICE already running"
+        fi
     else
-      echo "✓ $SERVICE already enabled"
-    fi
-
-    # Start if not running
-    if ! sudo launchctl list | grep -q "$SERVICE"; then
-      echo "→ Starting $SERVICE"
-      sudo launchctl start system/$SERVICE
-      echo "✓ $SERVICE running"
-    else
-      echo "✓ $SERVICE already running"
-    fi
+        echo "Manually run the cron check to ensure cron trash deletion works:"
+        echo "sudo launchctl enable system/$SERVICE"
+        echo "sudo launchctl start system/$SERVICE"
   fi
 }
 
