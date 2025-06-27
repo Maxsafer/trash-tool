@@ -23,11 +23,6 @@ BIN_DIR="$HOME/.local/bin"  # User-specific bin directory
 SCRIPT_NAME="trash.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/mac/trash.sh"
 
-if [[ $(id -u) -ne 0 ]]; then
-    echo "Run me with sudo:  sudo $0"
-    exit 1
-fi
-
 # Function to append a line to a file if an export for BIN_DIR is not already present,
 # using regex for a more robust check.
 append_if_not_exists() {
@@ -166,23 +161,27 @@ create_symlink() {
 cron_enable_start() {
   local SERVICE="com.vix.cron"
 
-  # Enable if disabled
-  if launchctl print-disabled system 2>/dev/null | grep -q "\"com.vix.cron\" => \(true\|disabled\)"; then
-    echo "→ Enabling $SERVICE"
-    launchctl enable system/$SERVICE 
-    echo "✓ $SERVICE enabled"
-
+  if [ "$NONINTERACTIVE" -eq 1 ]; then
+    echo "Skipping cron config check..."
   else
-    echo "✓ $SERVICE already enabled"
-  fi
+    # Enable if disabled
+    if sudo launchctl print-disabled system 2>/dev/null | grep -q "\"com.vix.cron\" => \(true\|disabled\)"; then
+      echo "→ Enabling $SERVICE"
+      sudo launchctl enable system/$SERVICE 
+      echo "✓ $SERVICE enabled"
+      
+    else
+      echo "✓ $SERVICE already enabled"
+    fi
 
-  # Start if not running
-  if ! launchctl list | grep -q "$SERVICE"; then
-    echo "→ Starting $SERVICE"
-    launchctl start system/$SERVICE
-    echo "✓ $SERVICE running"
-  else
-    echo "✓ $SERVICE already running"
+    # Start if not running
+    if ! sudo launchctl list | grep -q "$SERVICE"; then
+      echo "→ Starting $SERVICE"
+      sudo launchctl start system/$SERVICE
+      echo "✓ $SERVICE running"
+    else
+      echo "✓ $SERVICE already running"
+    fi
   fi
 }
 
