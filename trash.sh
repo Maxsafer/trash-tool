@@ -181,24 +181,24 @@ empty_trash() {
                   deletionTimestamp=$(date -d "$formattedDeletionDate" +%s 2>/dev/null)
               fi
               if [ -z "$deletionTimestamp" ]; then
-                 echo "Error parsing date for $(basename "$infoFile")"
+                 echo "[$curDate] Error parsing date for $(basename "$infoFile")"
                  continue
               fi
               age=$(( (currentTimestamp - deletionTimestamp) / 86400 ))
               if [ "$age" -ge "$days" ]; then
                  key=$(basename "$infoFile" .trashinfo)
                  rm -rf "$filesDir/$key" "$infoFile"
-                 echo "Deleted: $key (older than $days days)"
+                 echo "[$curDate] Deleted: $key (older than $days days)"
                  filesProcessed=$((filesProcessed + 1))
               fi
          done
          if [ "$filesProcessed" -eq 0 ]; then
-             echo "No files older than $days day(s) in trash."
+             echo "[$curDate] No files older than $days day(s) in trash."
          fi
          return
     elif [ "$1" = "--confirm" ]; then
          rm -rf "$filesDir"/* "$infoDir"/*
-         echo "Trash emptied."
+         echo "[$curDate] Trash emptied."
          return
     fi
 
