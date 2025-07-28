@@ -7,10 +7,10 @@ This tool is a Bash utility designed to manage files and directories by moving t
 
 I came up with this idea when I was working on a highly restrictive Linux environment. It works at the permission level you configure it to run at, meaning it is a mobile trash can configured and installed per user, located at ~/userdefinedpath.
 
-## Installation:
+## ~~Installation:~~
 Navigate to the desired installation path and run:
 ```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/main/installer.sh)"
+This version is deprecated. Refer to other branches or releases for maintained versions.
 ```
 This will create a new folder called `trash_tool` and it will add the following aliases `ts` and `trash`. If these are not recognized, manually source the displayed file.
 
