@@ -137,6 +137,10 @@ if [ -s "$COMPLETION_NAME" ]; then
     mkdir -p "$COMPLETION_DIR"
     ln -sf "$INSTALL_DIR/$COMPLETION_NAME" "$COMPLETION_DIR/trash"
     ln -sf "$INSTALL_DIR/$COMPLETION_NAME" "$COMPLETION_DIR/ts"
+    # Source fallback for systems without bash-completion auto-loading
+    if [ -f "$HOME/.bashrc" ] && ! grep -qF 'trash-completion.bash' "$HOME/.bashrc" 2>/dev/null; then
+        echo '[ -f ~/trash_tool/trash-completion.bash ] && . ~/trash_tool/trash-completion.bash' >> "$HOME/.bashrc"
+    fi
     echo "Bash completion installed."
 fi
 
