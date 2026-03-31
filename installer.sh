@@ -22,6 +22,9 @@ INSTALL_DIR="$HOME/trash_tool"
 BIN_DIR="$HOME/.local/bin"  # User-specific bin directory
 SCRIPT_NAME="trash.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/trash.sh"
+COMPLETION_NAME="trash-completion.bash"
+COMPLETION_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/trash-completion.bash"
+COMPLETION_DIR="$HOME/.local/share/bash-completion/completions"
 
 # Function to append a line to a file if an export for BIN_DIR is not already present,
 # using regex for a more robust check.
@@ -121,6 +124,21 @@ fi
 
 # Set secure permissions on the script
 chmod 700 "$SCRIPT_NAME"
+
+# Download bash completion script
+if [ "$DOWNLOADER" = "curl" ]; then
+    curl -sS "$COMPLETION_URL" -o "$COMPLETION_NAME" 2>/dev/null || true
+elif [ "$DOWNLOADER" = "wget" ]; then
+    wget -qO "$COMPLETION_NAME" "$COMPLETION_URL" 2>/dev/null || true
+fi
+
+# Install bash completions
+if [ -s "$COMPLETION_NAME" ]; then
+    mkdir -p "$COMPLETION_DIR"
+    ln -sf "$INSTALL_DIR/$COMPLETION_NAME" "$COMPLETION_DIR/trash"
+    ln -sf "$INSTALL_DIR/$COMPLETION_NAME" "$COMPLETION_DIR/ts"
+    echo "Bash completion installed."
+fi
 
 # Function to create (or update) a symlink, verifying if it already exists in BIN_DIR.
 create_symlink() {
