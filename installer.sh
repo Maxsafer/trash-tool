@@ -25,6 +25,9 @@ SCRIPT_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/mac
 COMPLETION_NAME="trash-completion.bash"
 COMPLETION_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/mac/trash-completion.bash"
 COMPLETION_DIR="$HOME/.local/share/bash-completion/completions"
+ZSH_COMPLETION_NAME="trash-completion.zsh"
+ZSH_COMPLETION_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/mac/trash-completion.zsh"
+ZSH_COMPLETION_DIR="$HOME/.local/share/zsh/completions"
 
 # Function to append a line to a file if an export for BIN_DIR is not already present,
 # using regex for a more robust check.
@@ -136,7 +139,35 @@ fi
 if [ -s "$COMPLETION_NAME" ]; then
     mkdir -p "$COMPLETION_DIR"
     ln -sf "$INSTALL_DIR/$COMPLETION_NAME" "$COMPLETION_DIR/ts"
+    # Source fallback for systems without bash-completion auto-loading
+    if [ -f "$HOME/.bashrc" ] && ! grep -qF 'trash-completion.bash' "$HOME/.bashrc" 2>/dev/null; then
+        echo '[ -f ~/trash_tool/trash-completion.bash ] && . ~/trash_tool/trash-completion.bash' >> "$HOME/.bashrc"
+    fi
     echo "Bash completion installed."
+fi
+
+# Download zsh completion script
+if [ "$DOWNLOADER" = "curl" ]; then
+    curl -sS "$ZSH_COMPLETION_URL" -o "$ZSH_COMPLETION_NAME" 2>/dev/null || true
+elif [ "$DOWNLOADER" = "wget" ]; then
+    wget -qO "$ZSH_COMPLETION_NAME" "$ZSH_COMPLETION_URL" 2>/dev/null || true
+fi
+
+# Install zsh completions
+if [ -s "$ZSH_COMPLETION_NAME" ]; then
+    mkdir -p "$ZSH_COMPLETION_DIR"
+    ln -sf "$INSTALL_DIR/$ZSH_COMPLETION_NAME" "$ZSH_COMPLETION_DIR/_ts"
+    ZSHRC="$HOME/.zshrc"
+    if [ -f "$ZSHRC" ] || command -v zsh >/dev/null 2>&1; then
+        touch "$ZSHRC"
+        if ! grep -qF '.local/share/zsh/completions' "$ZSHRC"; then
+            printf '\nfpath=(~/.local/share/zsh/completions $fpath)\n' >> "$ZSHRC"
+        fi
+        if ! grep -qE 'compinit' "$ZSHRC"; then
+            echo 'autoload -Uz compinit && compinit' >> "$ZSHRC"
+        fi
+    fi
+    echo "Zsh completion installed."
 fi
 
 # Function to create (or update) a symlink, verifying if it already exists in BIN_DIR.

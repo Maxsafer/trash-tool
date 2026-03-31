@@ -2,10 +2,20 @@
 
 _trash_keys() {
     local info_dir="${XDG_DATA_HOME:-$HOME/.local/share}/Trash/info"
-    for f in "$info_dir"/*.trashinfo; do
+    for f in "$info_dir"/*.trashinfo "$info_dir"/.*.trashinfo; do
         [ -f "$f" ] || continue
         basename "$f" .trashinfo
     done
+}
+
+# Substring-matching completion for trash keys.
+# Handles filenames with spaces/special chars safely.
+_complete_trash_keys() {
+    local cur="$1"
+    local key
+    while IFS= read -r key; do
+        [[ -z "$cur" || "$key" == *"$cur"* ]] && COMPREPLY+=("$key")
+    done < <(_trash_keys)
 }
 
 _trash() {
@@ -23,14 +33,12 @@ _trash() {
         -l|--list)
             COMPREPLY=( $(compgen -W "-R --Recursive -s --select" -- "$cur") )
             ;;
-        -s|--select)
-            COMPREPLY=( $(compgen -W "$(_trash_keys)" -- "$cur") )
-            ;;
-        -r|--recover)
-            COMPREPLY=( $(compgen -W "$(_trash_keys)" -- "$cur") )
+        -s|--select|-r|--recover)
+            _complete_trash_keys "$cur"
             ;;
         -e|--empty)
-            COMPREPLY=( $(compgen -W "--older $(_trash_keys)" -- "$cur") )
+            COMPREPLY=( $(compgen -W "--older" -- "$cur") )
+            _complete_trash_keys "$cur"
             ;;
         -c|--cron)
             COMPREPLY=( $(compgen -W "-p --print -t --time" -- "$cur") )
@@ -48,7 +56,7 @@ _trash() {
                 esac
             done
             if [[ "$cmd" == "recover" || "$cmd" == "empty" ]]; then
-                COMPREPLY=( $(compgen -W "$(_trash_keys)" -- "$cur") )
+                _complete_trash_keys "$cur"
             elif [[ "$cmd" == "cron" ]]; then
                 COMPREPLY=( $(compgen -W "-o --older" -- "$cur") )
             fi
