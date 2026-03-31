@@ -27,6 +27,18 @@ infoDir="$trashDir/info"
 mkdir -p "$filesDir" "$infoDir"
 chmod 700 "$filesDir" "$infoDir"
 
+# Script base folder
+get_script_path() {
+  SOURCE="$0"
+  while [ -L "$SOURCE" ]; do
+    DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    # If the symlink is relative, prepend the directory
+    [ "${SOURCE#/}" = "$SOURCE" ] && SOURCE="$DIR/$SOURCE"
+  done
+  cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd
+}
+
 #########################
 # Trash Action Functions#
 #########################
@@ -211,7 +223,7 @@ empty_trash() {
                   deletionTimestamp=$(date -d "$formattedDeletionDate" +%s 2>/dev/null)
               fi
               if [ -z "$deletionTimestamp" ]; then
-                 echo "Error parsing date for $(basename "$infoFile")"
+                 echo "[$curDate] Error parsing date for $(basename "$infoFile")"
                  continue
               fi
               local age=$(( (currentTimestamp - deletionTimestamp) / 86400 ))
@@ -219,17 +231,17 @@ empty_trash() {
                  local key
                  key=$(basename "$infoFile" .trashinfo)
                  rm -rf "$filesDir/$key" "$infoFile"
-                 echo "Deleted: $key (older than $days days)"
+                 echo "[$curDate] Deleted: $key (older than $days days)"
                  filesProcessed=$((filesProcessed+1))
               fi
          done
          if [ $filesProcessed -eq 0 ]; then
-             echo "No files older than $days day(s) in trash."
+             echo "[$curDate] No files older than $days day(s) in trash."
          fi
          return
     elif [ "$1" == "--confirm" ]; then
          rm -rf "$filesDir"/* "$infoDir"/*
-         echo "Trash emptied."
+         echo "[$curDate] Trash emptied."
          return
     fi
 
@@ -305,7 +317,6 @@ case "$1" in
              fi
          elif [ $# -eq 4 ]; then
              if [ "$2" == "-s" ] || [ "$2" == "--select" ]; then
-                 local key
                  key=$(ls "$infoDir"/*"${3}"*.trashinfo 2>/dev/null | head -n1)
                  if [ -z "$key" ]; then
                     echo "No trashed folder matching: $3"
@@ -360,7 +371,7 @@ case "$1" in
                    crontab -l 2>/dev/null | grep -v 'trash' | crontab -
                    echo "Removed trash from crontab."
               else
-                   cronCommand="$(generate_cron_expression "$days") $0 --empty $confirmFlag"
+                   cronCommand="$(generate_cron_expression "$days") "$(command -v trash)" --empty $confirmFlag >> "$(get_script_path)/cron.log" 2>&1"
                    currentCron=$(crontab -l 2>/dev/null | grep 'trash')
                    if [ -z "$currentCron" ]; then
                         (crontab -l 2>/dev/null; echo "$cronCommand") | crontab -

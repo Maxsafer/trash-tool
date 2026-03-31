@@ -4,13 +4,13 @@ This tool is a Bash utility designed to manage files and directories by moving t
 I came up with this idea when I was working on a highly restrictive Linux environment.
 
 ## Installation / Update
-To install/update the tool, run the following command from your desired/previous installation path:
+To install/update the tool, run the following command:
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)"
 ```
-* This installer creates a new folder called `trash_tool` (if it doesn’t already exist) and downloads the refined `trash.sh` script.
-* It sets up the aliases `ts` and `trash` in your shell configuration file (e.g. ~/.bashrc or ~/.zshrc), so that you can easily run the tool.
-* Note: Running the installer multiple times will update the script without affecting previously trashed items. However, moving or renaming the installation folder will break the aliases.
+* This installer creates a new folder called `trash_tool` (if it doesn’t already exist) and downloads `trash.sh` script.
+* It sets up symlinks `ts` and `trash`, so that you can easily run the tool.
+* Note: Running the installer multiple times will update the script without affecting previously trashed items. However, moving or renaming the installation folder will break the tool.
 
 ## Overview
 
@@ -140,6 +140,24 @@ Options:
 ## Dependencies
 * This tool uses standard Unix utilities such as ls, mv, rm, grep, and crontab.
 * It works on both macOS and Linux without extra dependencies.
+
+## Acknowledgements Section
+* r/Linux - Users that pointed me on the right direction.
+* [https://crontab.guru](https://crontab.guru) - Visual aid to confirm crons.
+* [https://bellard.org/jslinux](https://bellard.org/jslinux) - Different environtments for testing.
+* [https://www.onworks.net](https://www.onworks.net) - Different environtments for testing.
+* Docker - Allowed testing on light containers.
+
+```
+docker run --rm -it ubuntu bash -c "apt update && apt install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
+docker run --rm -it debian bash -c "apt update && apt install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
+docker run --rm -it alpine ash -c "apk add --no-cache curl && ash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)\" && ash"
+docker run --rm -it debian sh -c "apt-get update && apt-get install -y curl && /bin/sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)\" && /bin/sh"
+docker run --rm -it alpine sh -c "apk add --no-cache fish curl && /bin/sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/ash-compatible/installer.sh)\" && fish"
+docker run --rm -it rockylinux:8 bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
+docker run --rm -it almalinux:8 bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
+docker run --rm -it fedora bash -c "dnf install -y curl && bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/freedtspec/installer.sh)\" && bash"
+```
 
 ## Future Development
 * Further refinements or additional features may be added in future releases.
