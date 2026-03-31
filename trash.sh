@@ -43,14 +43,14 @@ get_script_path() {
 # Move a file/folder to trash.
 move_to_trash() {
     filePath="$1"
-    if [ ! -e "$filePath" ]; then
+    if [ ! -e "$filePath" ] && [ ! -L "$filePath" ]; then
         echo "$filePath: No such file or directory."
         exit 3
     fi
     fileName=$(basename "$filePath")
-    originalPath=$(readlink -f "$filePath")
+    originalPath="$(cd "$(dirname "$filePath")" && pwd)/$(basename "$filePath")"
     trashFileName="$fileName"
-    if [ -e "$filesDir/$trashFileName" ]; then
+    if [ -e "$filesDir/$trashFileName" ] || [ -L "$filesDir/$trashFileName" ]; then
          uuid=$(date +%s%N | sha256sum | cut -c1-12)
          trashFileName="${fileName}-${uuid}"
     fi
@@ -78,7 +78,7 @@ list_trash() {
     longestDate=15
     longestPath=10
 
-    for infoFile in "$infoDir"/*.trashinfo; do
+    for infoFile in "$infoDir"/*.trashinfo "$infoDir"/.*.trashinfo; do
         if [ -f "$infoFile" ]; then
             key=$(basename "$infoFile" .trashinfo)
             deletionDate=$(grep '^DeletionDate=' "$infoFile" | cut -d'=' -f2-)
@@ -99,7 +99,7 @@ list_trash() {
     # Header
     printf "${BOLD}${BLUE}%-*s${delimiter}%-*s${delimiter}%s${NC}\n" "$longestKey" "Trashed-Files" "$longestDate" "Trashed-Date" "Original-Path"
 
-    for infoFile in "$infoDir"/*.trashinfo; do
+    for infoFile in "$infoDir"/*.trashinfo "$infoDir"/.*.trashinfo; do
         if [ -f "$infoFile" ]; then
             key=$(basename "$infoFile" .trashinfo)
             deletionDate=$(grep '^DeletionDate=' "$infoFile" | cut -d'=' -f2-)
@@ -149,9 +149,9 @@ recover_file() {
     candidate="$dirPath/$searchKey"
     target=""
     
-    if [ ! -e "$originalPath" ]; then
+    if [ ! -e "$originalPath" ] && [ ! -L "$originalPath" ]; then
          target="$originalPath"
-    elif [ ! -e "$candidate" ]; then
+    elif [ ! -e "$candidate" ] && [ ! -L "$candidate" ]; then
          target="$candidate"
     else
          uuid=$(date +%s%N | sha256sum | cut -c1-12)
@@ -159,7 +159,7 @@ recover_file() {
     fi
 
     mkdir -p "$dirPath"
-    if [ ! -e "$filesDir/$searchKey" ]; then
+    if [ ! -e "$filesDir/$searchKey" ] && [ ! -L "$filesDir/$searchKey" ]; then
          echo "Trashed file not found: $searchKey"
          return
     fi
@@ -183,7 +183,7 @@ empty_trash() {
          days="$2"
          currentTimestamp=$(date +%s)
          filesProcessed=0
-         for infoFile in "$infoDir"/*.trashinfo; do
+         for infoFile in "$infoDir"/*.trashinfo "$infoDir"/.*.trashinfo; do
               [ -f "$infoFile" ] || continue
               deletionDate=$(grep '^DeletionDate=' "$infoFile" | cut -d'=' -f2-)
               if [ "$(uname)" = "Darwin" ]; then
@@ -209,7 +209,9 @@ empty_trash() {
          fi
          return
     elif [ "$1" = "--confirm" ]; then
-         rm -rf "$filesDir"/* "$infoDir"/*
+         rm -rf "$filesDir" "$infoDir"
+         mkdir -p "$filesDir" "$infoDir"
+         chmod 700 "$filesDir" "$infoDir"
          echo "[$curDate] Trash emptied."
          return
     fi
