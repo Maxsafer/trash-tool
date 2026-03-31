@@ -4,6 +4,9 @@
 # and collision-handled exact-match recovery and individual deletion)
 #
 
+# Enable matching of dotfiles with glob patterns
+shopt -s dotglob
+
 # SET DATE in ISO8601 (required by spec)
 curDate=$(date '+%Y-%m-%dT%H:%M:%S')
 
@@ -45,15 +48,15 @@ get_script_path() {
 # if so, append a unique identifier.
 move_to_trash() {
     local filePath="$1"
-    if [ ! -e "$filePath" ]; then
+    if [[ ! -e "$filePath" && ! -L "$filePath" ]]; then
         echo "$filePath: No such file or directory." && exit 3
     fi
     local fileName
     fileName=$(basename -- "$filePath")
     local originalPath
-    originalPath=$(readlink -f "$filePath")
+    originalPath="$(cd "$(dirname "$filePath")" && pwd)/$(basename "$filePath")"
     local trashFileName="$fileName"
-    if [ -e "$filesDir/$trashFileName" ]; then
+    if [[ -e "$filesDir/$trashFileName" || -L "$filesDir/$trashFileName" ]]; then
          local uuid
          uuid=$(date +%s%N | sha256sum | cut -c1-12)
          trashFileName="${fileName}-${uuid}"
@@ -171,9 +174,9 @@ recover_file() {
     local target=""
     
     # Collision handling:
-    if [ ! -e "$originalPath" ]; then
+    if [[ ! -e "$originalPath" && ! -L "$originalPath" ]]; then
          target="$originalPath"
-    elif [ ! -e "$candidate" ]; then
+    elif [[ ! -e "$candidate" && ! -L "$candidate" ]]; then
          target="$candidate"
     else
          local uuid
@@ -182,7 +185,7 @@ recover_file() {
     fi
 
     mkdir -p "$dirPath"
-    if [ ! -e "$filesDir/$searchKey" ]; then
+    if [[ ! -e "$filesDir/$searchKey" && ! -L "$filesDir/$searchKey" ]]; then
          echo "Trashed file not found: $searchKey"
          return
     fi
@@ -253,26 +256,76 @@ empty_trash() {
     done
 }
 
-# Generate a cron expression
-generate_cron_expression() {
+# launchd plist management
+PLIST_LABEL="com.trashtool.autoempty"
+PLIST_PATH="$HOME/Library/LaunchAgents/$PLIST_LABEL.plist"
+
+generate_launchd_plist() {
   local N=$1
-  local cron_expr=""
+  local confirmFlag="$2"
+  local tsPath
+  tsPath="$(command -v ts)"
+  local logPath="$(get_script_path)/cron.log"
+
+  # Build ProgramArguments
+  local progArgs=""
+  progArgs+="        <string>$tsPath</string>"$'\n'
+  progArgs+="        <string>--empty</string>"$'\n'
+  if [[ "$confirmFlag" == --older* ]]; then
+      local olderDays="${confirmFlag#--older }"
+      progArgs+="        <string>--older</string>"$'\n'
+      progArgs+="        <string>$olderDays</string>"
+  else
+      progArgs+="        <string>--confirm</string>"
+  fi
+
+  # Build StartCalendarInterval entries
+  local calEntries=""
   if (( N <= 28 )); then
-    for (( i = N; i <= 28; i+=N )); do
-      cron_expr+="$i,"
+    for (( i = N; i <= 28; i += N )); do
+      calEntries+="        <dict>"$'\n'
+      calEntries+="            <key>Day</key><integer>$i</integer>"$'\n'
+      calEntries+="            <key>Hour</key><integer>0</integer>"$'\n'
+      calEntries+="            <key>Minute</key><integer>0</integer>"$'\n'
+      calEntries+="        </dict>"$'\n'
     done
-    cron_expr=${cron_expr%,}
-    echo "0 0 $cron_expr * *"
   else
     local mid_day=$(( N % 30 ))
-    local month_interval=$((N / 30))
-    if [ "$mid_day" == "0" ]; then
-        mid_day="1"
-    elif [ "$mid_day" == "29" ]; then
-       mid_day="28"
-    fi
-    echo "0 0 $mid_day */$month_interval *"
+    local month_interval=$(( N / 30 ))
+    [ "$mid_day" -eq 0 ] && mid_day=1
+    [ "$mid_day" -eq 29 ] && mid_day=28
+    for (( m = month_interval; m <= 12; m += month_interval )); do
+      calEntries+="        <dict>"$'\n'
+      calEntries+="            <key>Month</key><integer>$m</integer>"$'\n'
+      calEntries+="            <key>Day</key><integer>$mid_day</integer>"$'\n'
+      calEntries+="            <key>Hour</key><integer>0</integer>"$'\n'
+      calEntries+="            <key>Minute</key><integer>0</integer>"$'\n'
+      calEntries+="        </dict>"$'\n'
+    done
   fi
+
+  mkdir -p "$(dirname "$PLIST_PATH")"
+  cat > "$PLIST_PATH" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>$PLIST_LABEL</string>
+    <key>ProgramArguments</key>
+    <array>
+$progArgs
+    </array>
+    <key>StartCalendarInterval</key>
+    <array>
+$calEntries    </array>
+    <key>StandardOutPath</key>
+    <string>$logPath</string>
+    <key>StandardErrorPath</key>
+    <string>$logPath</string>
+</dict>
+</plist>
+PLIST
 }
 
 #########################
@@ -357,7 +410,11 @@ case "$1" in
          ;;
     "-c" | "--cron")
          if [ $# -eq 2 ] && { [ "$2" == "-p" ] || [ "$2" == "--print" ]; }; then
-              echo "$(crontab -l 2>/dev/null | grep 'ts')"
+              if [ -f "$PLIST_PATH" ]; then
+                   cat "$PLIST_PATH"
+              else
+                   echo "No scheduled auto-empty job found."
+              fi
          elif { [ $# -eq 3 ] || [ $# -eq 5 ]; } && { [ "$2" == "-t" ] || [ "$2" == "--time" ]; }; then
               days=$3
               confirmFlag="--confirm"
@@ -365,21 +422,18 @@ case "$1" in
                     confirmFlag="--older $5"
               fi
               if [ "$days" -eq 0 ]; then
-                   crontab -l 2>/dev/null | grep -v 'ts' | crontab -
-                   echo "Removed trash from crontab."
+                   launchctl unload "$PLIST_PATH" 2>/dev/null
+                   rm -f "$PLIST_PATH"
+                   echo "Removed scheduled auto-empty job."
               else
-                   cronCommand="$(generate_cron_expression "$days") "$(command -v ts)" --empty $confirmFlag >> "$(get_script_path)/cron.log" 2>&1"
-                   currentCron=$(crontab -l 2>/dev/null | grep 'ts')
-                   if [ -z "$currentCron" ]; then
-                        (crontab -l 2>/dev/null; echo "$cronCommand") | crontab -
-                        echo "$(crontab -l 2>/dev/null | grep 'ts')"
-                   elif [[ "$currentCron" != *"$cronCommand"* ]]; then
-                        (crontab -l | grep -v 'ts'; echo "$cronCommand") | crontab -
-                        echo "$(crontab -l 2>/dev/null | grep 'ts')"
-                   fi
+                   launchctl unload "$PLIST_PATH" 2>/dev/null
+                   generate_launchd_plist "$days" "$confirmFlag"
+                   launchctl load "$PLIST_PATH"
+                   echo "Scheduled auto-empty every $days day(s)."
+                   cat "$PLIST_PATH"
               fi
          else
-              echo "Cron requires (-p | --print) or (-t | --time [days]) or (-t | --time [days] -o | --older [days])."
+              echo "Schedule requires (-p | --print) or (-t | --time [days]) or (-t | --time [days] -o | --older [days])."
          fi
          ;;
     "-h" | "--help")
@@ -407,7 +461,7 @@ case "$1" in
          echo "       --older [days]   Delete only files older than the specified days"
          echo "       [file names]    Delete the specified trashed file(s) individually"
          echo ""
-         echo "  -c, --cron           Manage automated trash emptying via cron"
+         echo "  -c, --cron           Manage scheduled auto-empty (launchd)"
          echo "       -p, --print     Show current cron job"
          echo "       -t, --time [days]   Set automatic emptying every N days"
          echo "       -o, --older [days]  Only delete files older than N days when emptying"

@@ -22,6 +22,9 @@ INSTALL_DIR="$HOME/trash_tool"
 BIN_DIR="$HOME/.local/bin"  # User-specific bin directory
 SCRIPT_NAME="trash.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/mac/trash.sh"
+COMPLETION_NAME="trash-completion.bash"
+COMPLETION_URL="https://raw.githubusercontent.com/Maxsafer/trash-tool/refs/heads/mac/trash-completion.bash"
+COMPLETION_DIR="$HOME/.local/share/bash-completion/completions"
 
 # Function to append a line to a file if an export for BIN_DIR is not already present,
 # using regex for a more robust check.
@@ -122,6 +125,20 @@ fi
 # Set secure permissions on the script
 chmod 700 "$SCRIPT_NAME"
 
+# Download bash completion script
+if [ "$DOWNLOADER" = "curl" ]; then
+    curl -sS "$COMPLETION_URL" -o "$COMPLETION_NAME" 2>/dev/null || true
+elif [ "$DOWNLOADER" = "wget" ]; then
+    wget -qO "$COMPLETION_NAME" "$COMPLETION_URL" 2>/dev/null || true
+fi
+
+# Install bash completions
+if [ -s "$COMPLETION_NAME" ]; then
+    mkdir -p "$COMPLETION_DIR"
+    ln -sf "$INSTALL_DIR/$COMPLETION_NAME" "$COMPLETION_DIR/ts"
+    echo "Bash completion installed."
+fi
+
 # Function to create (or update) a symlink, verifying if it already exists in BIN_DIR.
 create_symlink() {
     local link_name="$1"
@@ -157,48 +174,8 @@ create_symlink() {
     fi
 }
 
-# Verifies that cron is enabled and running
-cron_enable_start() {
-  local SERVICE="com.vix.cron"
-
-  if [ "$NONINTERACTIVE" -eq 1 ]; then
-    echo "Manually run the cron check to ensure cron trash deletion works:"
-    echo "  sudo launchctl enable system/$SERVICE"
-    echo "  sudo launchctl start system/$SERVICE"
-  else
-    read -p "Start automatic cron service check with sudo? (can be manually done) [y/N]: " answer
-    if [[ "$answer" =~ ^[Yy]$ ]]; then
-        # Enable if disabled
-        if sudo launchctl print-disabled system 2>/dev/null | grep -q "\"com.vix.cron\" => \(true\|disabled\)"; then
-          echo "→ Enabling $SERVICE"
-          sudo launchctl enable system/$SERVICE 
-          echo "✓ $SERVICE enabled"
-          
-        else
-          echo "✓ $SERVICE already enabled"
-        fi
-    
-        # Start if not running
-        if ! sudo launchctl list | grep -q "$SERVICE"; then
-          echo "→ Starting $SERVICE"
-          sudo launchctl start system/$SERVICE
-          echo "✓ $SERVICE running"
-        else
-          echo "✓ $SERVICE already running"
-        fi
-    else
-        echo "Manually run the cron check to ensure cron trash deletion works:"
-        echo "  sudo launchctl enable system/$SERVICE"
-        echo "  sudo launchctl start system/$SERVICE"
-    fi
-  fi
-}
-
 # Create symbolic links in ~/.local/bin for 'ts'
 create_symlink "$BIN_DIR/ts" "$INSTALL_DIR/$SCRIPT_NAME"
-
-# Set cron for MacOS
-cron_enable_start
 
 # Verify installation
 if command -v ts >/dev/null && command -v ts >/dev/null; then
