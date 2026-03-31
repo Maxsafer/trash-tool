@@ -4,6 +4,9 @@
 # and collision-handled exact-match recovery and individual deletion)
 #
 
+# Enable matching of dotfiles with glob patterns
+shopt -s dotglob
+
 # SET DATE in ISO8601 (required by spec)
 curDate=$(date '+%Y-%m-%dT%H:%M:%S')
 
@@ -33,15 +36,15 @@ chmod 700 "$filesDir" "$infoDir"
 # if so, append a unique identifier.
 move_to_trash() {
     local filePath="$1"
-    if [ ! -e "$filePath" ]; then
+    if [[ ! -e "$filePath" && ! -L "$filePath" ]]; then
         echo "$filePath: No such file or directory." && exit 3
     fi
     local fileName
     fileName=$(basename -- "$filePath")
     local originalPath
-    originalPath=$(readlink -f "$filePath")
+    originalPath="$(cd "$(dirname "$filePath")" && pwd)/$(basename "$filePath")"
     local trashFileName="$fileName"
-    if [ -e "$filesDir/$trashFileName" ]; then
+    if [[ -e "$filesDir/$trashFileName" || -L "$filesDir/$trashFileName" ]]; then
          local uuid
          uuid=$(date +%s%N | sha256sum | cut -c1-12)
          trashFileName="${fileName}-${uuid}"
@@ -159,9 +162,9 @@ recover_file() {
     local target=""
     
     # Collision handling:
-    if [ ! -e "$originalPath" ]; then
+    if [[ ! -e "$originalPath" && ! -L "$originalPath" ]]; then
          target="$originalPath"
-    elif [ ! -e "$candidate" ]; then
+    elif [[ ! -e "$candidate" && ! -L "$candidate" ]]; then
          target="$candidate"
     else
          local uuid
@@ -170,7 +173,7 @@ recover_file() {
     fi
 
     mkdir -p "$dirPath"
-    if [ ! -e "$filesDir/$searchKey" ]; then
+    if [[ ! -e "$filesDir/$searchKey" && ! -L "$filesDir/$searchKey" ]]; then
          echo "Trashed file not found: $searchKey"
          return
     fi
