@@ -76,8 +76,6 @@ EOF
 
 # List trashed files by reading the .trashinfo files.
 list_trash() {
-    local infoDir="$HOME/.local/share/Trash/info"  # Ensure this is set correctly
-
     # Define a proper delimiter for easy parsing
     local delimiter=$'\t'  # Tab-delimited output
     local longestKey=10  # Default width for filename
