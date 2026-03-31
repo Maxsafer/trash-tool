@@ -189,3 +189,87 @@ teardown() {
   run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" "no_write_permission.txt"
   [ -f "$XDG_DATA_HOME/Trash/files/no_write_permission.txt" ]
 }
+
+@test "Trash a broken symlink" {
+    ln -s /nonexistent broken_link
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" broken_link
+    [ "$status" -eq 0 ]
+    [ -L "$XDG_DATA_HOME/Trash/files/broken_link" ]
+}
+
+@test "Trashinfo stores symlink path not target" {
+    ln -s /some/target my_link
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" my_link
+    infoFile="$XDG_DATA_HOME/Trash/info/my_link.trashinfo"
+    [ -f "$infoFile" ]
+    storedPath=$(grep '^Path=' "$infoFile" | cut -d'=' -f2-)
+    echo "$storedPath" | grep -q '/my_link$'
+    [ "$storedPath" != "/some/target" ]
+}
+
+@test "Recover a broken symlink" {
+    ln -s /nonexistent broken_link
+    orig_dir=$(pwd)
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" broken_link
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" -r broken_link
+    [ -L "$orig_dir/broken_link" ]
+    [ "$(readlink "$orig_dir/broken_link")" = "/nonexistent" ]
+}
+
+@test "Broken symlink collision in trash" {
+    ln -s /nonexistent broken_link
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" broken_link
+    ln -s /nonexistent broken_link
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" broken_link
+    [ -L "$XDG_DATA_HOME/Trash/files/broken_link" ]
+    result=$(find "$XDG_DATA_HOME/Trash/files" -name "broken_link-*" -type l)
+    [ -n "$result" ]
+}
+
+@test "Nonexistent file error" {
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" nonexistent_file
+    [ "$status" -ne 0 ]
+    echo "$output" | grep -q "No such file or directory"
+}
+
+@test "Ambiguous recovery lists matches" {
+    touch myfile.txt
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" myfile.txt
+    touch myfile.txt
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" myfile.txt
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" -r myfile.txt
+    echo "$output" | grep -q "Ambiguous\|Recovered"
+}
+
+@test "Empty entire trash with --confirm" {
+    touch file1.txt file2.txt
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" file1.txt file2.txt
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" -e --confirm
+    [ "$status" -eq 0 ]
+    [ -z "$(ls -A "$XDG_DATA_HOME/Trash/files/")" ]
+    [ -z "$(ls -A "$XDG_DATA_HOME/Trash/info/")" ]
+}
+
+@test "Help menu displays" {
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" -h
+    [ "$status" -eq 0 ]
+    echo "$output" | grep -q "Trash Tool"
+    echo "$output" | grep -q "Usage:"
+}
+
+@test "Recover with collision at original path" {
+    touch myfile.txt
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" myfile.txt
+    touch myfile.txt
+    recovered_output=$(env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" -r myfile.txt)
+    recovered_path=$(echo "$recovered_output" | awk -F "Recovered: " '{print $2}' | xargs)
+    [ -f "$recovered_path" ]
+}
+
+@test "Trash and recover dotfile" {
+    touch .hidden_file
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" .hidden_file
+    [ "$status" -eq 0 ]
+    run env XDG_DATA_HOME="$XDG_DATA_HOME" sh "$TRASH_TOOL_PATH/trash.sh" -r .hidden_file
+    [ -f ".hidden_file" ]
+}
