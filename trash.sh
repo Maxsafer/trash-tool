@@ -72,7 +72,6 @@ EOF
 
 # List trashed files by reading the .trashinfo files.
 list_trash() {
-    infoDir="$HOME/.local/share/Trash/info"
     delimiter="    "  # using spaces as delimiter
     longestKey=10
     longestDate=15
