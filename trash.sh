@@ -435,7 +435,7 @@ case "$1" in
          fi
          ;;
     "-h" | "--help")
-         echo "Trash Tool (freedesktop compliant v1.1)"
+         echo "Trash Tool (freedesktop compliant mac-v1.3)"
          echo ""
          echo "Usage: ts [OPTION] [FILE]"
          echo ""
