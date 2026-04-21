@@ -2,7 +2,7 @@
 
 _trash_keys() {
     local info_dir="${XDG_DATA_HOME:-$HOME/.local/share}/Trash/info"
-    for f in "$info_dir"/*.trashinfo; do
+    for f in "$info_dir"/*.trashinfo "$info_dir"/.*.trashinfo; do
         [ -f "$f" ] || continue
         basename "$f" .trashinfo
     done
