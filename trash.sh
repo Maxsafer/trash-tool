@@ -326,6 +326,45 @@ $calEntries    </array>
 PLIST
 }
 
+# Show the cron log: tail mode (last N lines) or days mode (entries from past N days).
+show_cron_log() {
+    local mode="$1"
+    local n="$2"
+    local logFile="$(get_script_path)/cron.log"
+    if [ ! -f "$logFile" ]; then
+        echo "No cron log at $logFile"
+        return
+    fi
+
+    if [ "$mode" = "tail" ]; then
+        tail -n "$n" "$logFile"
+        return
+    fi
+
+    local currentTimestamp
+    currentTimestamp=$(date +%s)
+    local cutoff=$(( currentTimestamp - n * 86400 ))
+    local printed=0
+    local lineDate lineTimestamp
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^\[([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2})\] ]]; then
+            lineDate="${BASH_REMATCH[1]}"
+            if [ "$(uname)" = "Darwin" ]; then
+                lineTimestamp=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$lineDate" "+%s" 2>/dev/null)
+            else
+                lineTimestamp=$(date -d "${lineDate/T/ }" +%s 2>/dev/null)
+            fi
+            if [ -n "$lineTimestamp" ] && [ "$lineTimestamp" -ge "$cutoff" ]; then
+                echo "$line"
+                printed=$((printed + 1))
+            fi
+        fi
+    done < "$logFile"
+    if [ "$printed" -eq 0 ]; then
+        echo "No cron log entries in the last $n day(s)."
+    fi
+}
+
 #########################
 # CLI Argument Handling #
 #########################
@@ -413,6 +452,12 @@ case "$1" in
               else
                    echo "No scheduled auto-empty job found."
               fi
+         elif [ $# -eq 2 ] && { [ "$2" == "-l" ] || [ "$2" == "--log" ]; }; then
+              show_cron_log tail 20
+         elif [ $# -eq 3 ] && { [ "$2" == "-l" ] || [ "$2" == "--log" ]; } && [[ "$3" =~ ^[0-9]+$ ]]; then
+              show_cron_log tail "$3"
+         elif [ $# -eq 4 ] && { [ "$2" == "-l" ] || [ "$2" == "--log" ]; } && [ "$3" == "--last" ] && [[ "$4" =~ ^[0-9]+$ ]]; then
+              show_cron_log days "$4"
          elif { [ $# -eq 3 ] || [ $# -eq 5 ]; } && { [ "$2" == "-t" ] || [ "$2" == "--time" ]; }; then
               days=$3
               confirmFlag="--confirm"
@@ -431,7 +476,7 @@ case "$1" in
                    cat "$PLIST_PATH"
               fi
          else
-              echo "Schedule requires (-p | --print) or (-t | --time [days]) or (-t | --time [days] -o | --older [days])."
+              echo "Schedule requires (-p | --print), (-l | --log [N] | --log --last [days]), or (-t | --time [days]) or (-t | --time [days] -o | --older [days])."
          fi
          ;;
     "-h" | "--help")
@@ -463,6 +508,9 @@ case "$1" in
          echo "       -p, --print     Show current cron job"
          echo "       -t, --time [days]   Set automatic emptying every N days"
          echo "       -o, --older [days]  Only delete files older than N days when emptying"
+         echo "       -l, --log       Tail the cron log (last 20 lines)"
+         echo "       -l, --log [N]   Tail the cron log (last N lines)"
+         echo "       -l, --log --last [days]   Show cron log entries from the past N days"
          exit
          ;;
     *)

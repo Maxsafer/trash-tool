@@ -56,11 +56,18 @@ _ts() {
             ;;
         -c|--cron)
             if (( CURRENT == 3 )); then
-                compadd -- -p --print -t --time
-            elif (( CURRENT >= 4 )); then
+                compadd -- -p --print -t --time -l --log
+            elif (( CURRENT == 4 )); then
+                case "$words[3]" in
+                    -t|--time) ;;
+                    -l|--log)
+                        compadd -- --last
+                        ;;
+                esac
+            elif (( CURRENT == 5 )); then
                 case "$words[3]" in
                     -t|--time)
-                        (( CURRENT == 5 )) && compadd -- -o --older
+                        compadd -- -o --older
                         ;;
                 esac
             fi
