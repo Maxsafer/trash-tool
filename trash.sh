@@ -250,6 +250,46 @@ generate_cron_expression() {
   fi
 }
 
+# Show the cron log: tail mode (last N lines) or days mode (entries from past N days).
+show_cron_log() {
+    mode="$1"
+    n="$2"
+    logFile="$(get_script_path)/cron.log"
+    if [ ! -f "$logFile" ]; then
+        echo "No cron log at $logFile"
+        return
+    fi
+
+    if [ "$mode" = "tail" ]; then
+        tail -n "$n" "$logFile"
+        return
+    fi
+
+    currentTimestamp=$(date +%s)
+    cutoff=$(( currentTimestamp - n * 86400 ))
+    printed=0
+    while IFS= read -r line; do
+        case "$line" in
+            \[????-??-??T??:??:??\]*)
+                lineDate=$(echo "$line" | cut -c2-20)
+                if [ "$(uname)" = "Darwin" ]; then
+                    lineTimestamp=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$lineDate" "+%s" 2>/dev/null)
+                else
+                    formattedDate=$(echo "$lineDate" | sed 's/T/ /')
+                    lineTimestamp=$(date -d "$formattedDate" +%s 2>/dev/null)
+                fi
+                if [ -n "$lineTimestamp" ] && [ "$lineTimestamp" -ge "$cutoff" ]; then
+                    echo "$line"
+                    printed=$((printed + 1))
+                fi
+                ;;
+        esac
+    done < "$logFile"
+    if [ "$printed" -eq 0 ]; then
+        echo "No cron log entries in the last $n day(s)."
+    fi
+}
+
 #########################
 # CLI Argument Handling #
 #########################
@@ -335,13 +375,55 @@ case "$1" in
                  -p|--print)
                      crontab -l 2>/dev/null | grep 'trash'
                      ;;
+                 -l|--log)
+                     show_cron_log tail 20
+                     ;;
                  *)
-                     echo "Cron requires (-p | --print) or (-t | --time [days]) or (-t | --time [days] -o | --older [days])."
+                     echo "Cron requires (-p | --print), (-l | --log [N] | --log --last [days]), or (-t | --time [days]) or (-t | --time [days] -o | --older [days])."
+                     exit 1
+                     ;;
+             esac
+         elif [ "$#" -eq 4 ]; then
+             case "$2" in
+                 -l|--log)
+                     if [ "$3" = "--last" ]; then
+                         case "$4" in
+                             ''|*[!0-9]*)
+                                 echo "--last requires an integer number of days."
+                                 exit 1
+                                 ;;
+                             *)
+                                 show_cron_log days "$4"
+                                 ;;
+                         esac
+                     else
+                         echo "Cron requires (-p | --print), (-l | --log [N] | --log --last [days]), or (-t | --time [days]) or (-t | --time [days] -o | --older [days])."
+                         exit 1
+                     fi
+                     ;;
+                 *)
+                     echo "Cron requires (-p | --print), (-l | --log [N] | --log --last [days]), or (-t | --time [days]) or (-t | --time [days] -o | --older [days])."
                      exit 1
                      ;;
              esac
          elif [ "$#" -eq 3 ] || [ "$#" -eq 5 ]; then
              case "$2" in
+                 -l|--log)
+                     if [ "$#" -eq 3 ]; then
+                         case "$3" in
+                             ''|*[!0-9]*)
+                                 echo "Cron requires (-p | --print), (-l | --log [N] | --log --last [days]), or (-t | --time [days]) or (-t | --time [days] -o | --older [days])."
+                                 exit 1
+                                 ;;
+                             *)
+                                 show_cron_log tail "$3"
+                                 ;;
+                         esac
+                     else
+                         echo "Cron requires (-p | --print), (-l | --log [N] | --log --last [days]), or (-t | --time [days]) or (-t | --time [days] -o | --older [days])."
+                         exit 1
+                     fi
+                     ;;
                  -t|--time)
                      days="$3"
                      confirmFlag="--confirm"
@@ -383,7 +465,7 @@ case "$1" in
                      ;;
              esac
          else
-             echo "Cron requires (-p | --print) or (-t | --time [days]) or (-t | --time [days] -o | --older [days])."
+             echo "Cron requires (-p | --print), (-l | --log [N] | --log --last [days]), or (-t | --time [days]) or (-t | --time [days] -o | --older [days])."
          fi
          ;;
     -h|--help)
@@ -415,6 +497,9 @@ case "$1" in
          echo "       -p, --print     Show current cron job"
          echo "       -t, --time [days]   Set automatic emptying every N days"
          echo "       -o, --older [days]  Only delete files older than N days when emptying"
+         echo "       -l, --log       Tail the cron log (last 20 lines)"
+         echo "       -l, --log [N]   Tail the cron log (last N lines)"
+         echo "       -l, --log --last [days]   Show cron log entries from the past N days"
          exit 0
          ;;
     *)
