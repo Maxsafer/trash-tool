@@ -20,8 +20,22 @@ _trash() {
                 COMPREPLY=( $(compgen -W "-h --help -l --list -r --recover -e --empty -c --cron" -- "$cur") )
             fi
             ;;
-        -l|--list)
-            COMPREPLY=( $(compgen -W "-R --Recursive -s --select" -- "$cur") )
+        -l|--list|--log)
+            local i is_log=0
+            if [[ "$prev" == "--log" ]]; then
+                is_log=1
+            else
+                for (( i=1; i < COMP_CWORD-1; i++ )); do
+                    case "${COMP_WORDS[i]}" in
+                        -c|--cron) is_log=1; break ;;
+                    esac
+                done
+            fi
+            if (( is_log )); then
+                COMPREPLY=( $(compgen -W "--last" -- "$cur") )
+            else
+                COMPREPLY=( $(compgen -W "-R --Recursive -s --select" -- "$cur") )
+            fi
             ;;
         -s|--select)
             COMPREPLY=( $(compgen -W "$(_trash_keys)" -- "$cur") )
@@ -33,9 +47,9 @@ _trash() {
             COMPREPLY=( $(compgen -W "--older $(_trash_keys)" -- "$cur") )
             ;;
         -c|--cron)
-            COMPREPLY=( $(compgen -W "-p --print -t --time" -- "$cur") )
+            COMPREPLY=( $(compgen -W "-p --print -t --time -l --log" -- "$cur") )
             ;;
-        -t|--time|-R|--Recursive|--older)
+        -t|--time|-R|--Recursive|--older|--last)
             return
             ;;
         *)
