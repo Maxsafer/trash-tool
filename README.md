@@ -115,7 +115,7 @@ ts -h
 ```
 Displays detailed usage instructions. Running `ts` or `trash` are equivalent, and running them alone will also display help.
 ```
-Trash Tool (freedesktop compliant v1.1)
+Trash Tool (freedesktop compliant ash-v1.3)
 
 Usage: ts [OPTION] [FILE]
 
