@@ -115,7 +115,7 @@ ts -h
 ```
 Displays detailed usage instructions.
 ```
-Trash Tool (freedesktop compliant v1.1)
+Trash Tool (freedesktop compliant mac-v1.3)
 
 Usage: ts [OPTION] [FILE]
 
