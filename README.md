@@ -34,6 +34,7 @@ The tool provides options for scheduling automatic trash emptying using cron, fe
 * Can print the current cron job.
 * Can set up a cron job to empty the trash every N days.
 * Can limit deletion to items older than the specified number of days.
+* Can view the cron log: tail the last N lines, or show entries from the past N days.
 
 ## Usage Examples
 ### Moving Items to Trash:
@@ -95,6 +96,18 @@ Note: This means that the cron job will execute on the 7th, 14th, 21th and 28th.
 ```
 ts -c -t 7 -o 30
 ```
+* #### Tail the cron log (last 20 lines by default):
+```
+ts -c -l
+```
+* #### Tail the last N lines of the cron log:
+```
+ts -c -l 50
+```
+* #### Show cron log entries from the past N days:
+```
+ts -c -l --last 7
+```
 
 ### Help Menu:
 ```
@@ -130,6 +143,9 @@ Options:
        -p, --print     Show current cron job
        -t, --time [days]   Set automatic emptying every N days
        -o, --older [days]  Only delete files older than N days when emptying
+       -l, --log       Tail the cron log (last 20 lines)
+       -l, --log [N]   Tail the cron log (last N lines)
+       -l, --log --last [days]   Show cron log entries from the past N days
 ```
 
 ## Error Handling
