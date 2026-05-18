@@ -72,6 +72,11 @@ _ts() {
                 esac
             fi
             ;;
+        -*)
+            ;;
+        *)
+            _files
+            ;;
     esac
 }
 
